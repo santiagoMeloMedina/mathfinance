@@ -41,9 +41,9 @@ class Metric:
 
 
 class VDT:
-    def __init__(self, VPs: List[float] = [], VFs: List[float] = []):
-        self.VPs = VPs
-        self.VFs = VFs
+    def __init__(self):
+        self.VPs = []
+        self.VFs = []
 
     def add_VP(self, value: Union[Metric, float]):
         self.VPs.append(value.VP if type(value) == Metric else value)

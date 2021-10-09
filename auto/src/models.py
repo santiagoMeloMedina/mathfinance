@@ -43,7 +43,7 @@ class Percentage:
         return val ** x
 
     def __str__(self):
-        return f"{self.value}%"
+        return f"{round(self.value, self.decimals)}%"
 
     def __eq__(self, x: Percentage):
         return self.real == x.real
