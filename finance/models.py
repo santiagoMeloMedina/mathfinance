@@ -3,6 +3,10 @@ class Percentage:
         self.value = value if value else 0
         self.decimals = decimals
 
+    @classmethod
+    def from_real(cls, real: float):
+        return cls(real * 100)
+
     @property
     def real(self):
         return round(self.value / 100, self.decimals)
