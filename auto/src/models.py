@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Percentage:
     def __init__(self, value, decimals=10):
         self.value = value if value else 0
@@ -9,7 +12,9 @@ class Percentage:
 
     @property
     def real(self):
-        return round(self.value / 100, self.decimals)
+        return round(
+            self.value / 100, self.decimals + 2
+        )  # +2 Because /100 takes away two.
 
     def same(self, x):
         result = [self.real, x]
@@ -39,3 +44,18 @@ class Percentage:
 
     def __str__(self):
         return f"{self.value}%"
+
+    def __eq__(self, x: Percentage):
+        return self.real == x.real
+
+    def __gt__(self, x: Percentage):
+        return self.real > x.real
+
+    def __ge__(self, x: Percentage):
+        return self.real >= x.real
+
+    def __lt__(self, x: Percentage):
+        return self.real < x.real
+
+    def __le__(self, x: Percentage):
+        return self.real <= x.real

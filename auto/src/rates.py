@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 from typing import Any, List, Tuple
-from models import Percentage
 from enum import Enum
 from collections import deque
 
+from src import models
 
 class Rate:
     def __init__(
@@ -15,10 +16,10 @@ class Rate:
         nper: int = 1,
         d_nper: int = 1,
     ):
-        self.ipa = Percentage(ipa)
-        self.ipv = Percentage(ipv)
-        self.nominal = Percentage(nominal)
-        self.effective = Percentage(effective)
+        self.ipa = models.Percentage(ipa)
+        self.ipv = models.Percentage(ipv)
+        self.nominal = models.Percentage(nominal)
+        self.effective = models.Percentage(effective)
         self.nper = nper
         self.d_nper = d_nper
 
@@ -33,45 +34,45 @@ class Rate:
         """
 
     def to_percentage(self, value: float):
-        return Percentage.from_real(value)
+        return models.Percentage.from_real(value)
 
-    def nominal_ipa(self) -> Percentage:
+    def nominal_ipa(self) -> models.Percentage:
         self.ipa = self.to_percentage(self.nominal / self.nper)
         return self.ipa
 
-    def nominal_ipv(self) -> Percentage:
+    def nominal_ipv(self) -> models.Percentage:
         self.ipv = self.to_percentage(self.nominal / self.nper)
         return self.ipv
 
-    def ipa_ipv(self) -> Percentage:
+    def ipa_ipv(self) -> models.Percentage:
         value = self.ipa
         tmp = 1 - value.real
         self.ipv = self.to_percentage(value / tmp)
         return self.ipv
 
-    def ipv_ipa(self) -> Percentage:
+    def ipv_ipa(self) -> models.Percentage:
         value = self.ipv
         tmp = 1 + value.real
         self.ipa = self.to_percentage(value / tmp)
         return self.ipa
 
-    def ipv_effective(self) -> Percentage:
+    def ipv_effective(self) -> models.Percentage:
         tmp = 1 + self.ipv.real
         self.effective = self.to_percentage((tmp ** self.nper) - 1)
         return self.effective
 
-    def effective_ipv(self) -> Percentage:
+    def effective_ipv(self) -> models.Percentage:
         p1 = 1 + self.effective.real
         p2 = 1 / self.d_nper
         self.ipv = self.to_percentage((p1 ** p2) - 1)
         self.nper = self.d_nper
         return self.ipv
 
-    def ipa_nominal(self) -> Percentage:
+    def ipa_nominal(self) -> models.Percentage:
         self.nominal = self.to_percentage(self.ipa * self.nper)
         return self.nominal
 
-    def ipv_nominal(self) -> Percentage:
+    def ipv_nominal(self) -> models.Percentage:
         self.nominal = self.to_percentage(self.ipv * self.nper)
         return self.nominal
 

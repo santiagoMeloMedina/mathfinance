@@ -1,7 +1,4 @@
-from terms import Terms
-from rates import Rate, RateOperation
-from models import Percentage
-from util import format_money
+from src import terms, rates, models, util
 
 import json
 
@@ -10,7 +7,7 @@ import json
     B: Base value
     J: Geometric gradient
     N: N term
-    Ip: Interest rate
+    Ip: Interest rates.Rate
 """
 
 
@@ -25,9 +22,9 @@ class GeometricGradient:
         decimal: int = 3,
     ):
         self.B = B
-        self.J = Percentage(J)
+        self.J = models.Percentage(J)
         self.N = N
-        self.Ip = Percentage(Ip)
+        self.Ip = models.Percentage(Ip)
         self.VP = VP
         self.decimal = decimal
         self.new_system()
@@ -98,33 +95,33 @@ class GeometricGradient:
         p1 = 1 / (self.J - self.Ip)
         p2 = (((1 + self.J.real) / (1 + self.Ip.real)) ** self.N) - 1
         self.VP = self.B * p1 * p2
-        return format_money(self.VP, decimal=self.decimal)
+        return util.format_money(self.VP, decimal=self.decimal)
 
     @property
     def _B(self):
         p1 = 1 / (self.J - self.Ip)
         p2 = (((1 + self.J.real) / (1 + self.Ip.real)) ** self.N) - 1
         self.B = self.VP / (p1 * p2)
-        return format_money(self.B, decimal=self.decimal)
+        return util.format_money(self.B, decimal=self.decimal)
 
     @property
     def _B_w_VP_Ip_J(self):
         tmp = self.Ip - self.J
         self.B = self.VP * tmp
-        return format_money(self.B, decimal=self.decimal)
+        return util.format_money(self.B, decimal=self.decimal)
 
 
-# ip = RateOperation.simple(
-#     rate=Rate(effective=4.20, nper=1, d_nper=12),
-#     source=RateOperation.EFFECTIVE,
-#     target=RateOperation.IPV,
+# ip = rates.rates.RateOperation.simple(
+#     rates.Rate=rates.Rate(effective=4.20, nper=1, d_nper=12),
+#     source=rates.rates.RateOperation.EFFECTIVE,
+#     target=rates.rates.RateOperation.IPV,
 # )
 
-# term = Terms.many(term=Terms.MONTH, years=3)yt76hy8
+# term = terms.Terms.many(term=terms.Terms.MONTH, years=3)yt76hy8
 
 # gg = GeometricGradient(VP=200000000, J=0.20, N=360, Ip=ip["result"].value)
 # print("B", gg._B_w_VP_Ip_J)
 
-# print(format_money(gg.get_n_fee(360), 3))
+# print(util.format_money(gg.get_n_fee(360), 3))
 
 # print(json.dumps(gg.get_totals(), indent=2))
