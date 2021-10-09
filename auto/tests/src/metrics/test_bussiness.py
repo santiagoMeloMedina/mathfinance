@@ -43,6 +43,56 @@ _MOCK_PROJECTS_MUTUALLY_ESCLUSIVE_VPNI = 294721.55
 _MOCK_PROJECTS_MUTUALLY_ESCLUSIVE_TIRI = 14.19
 
 
+_MOCK_PROJECTS_EXERCISE = {
+    "budget": 4000000,
+    "tco": 10,
+    "projects": [
+        [
+            -1800000,
+            600000,
+            600000,
+            600000,
+            600000,
+            600000,
+        ],
+        [
+            -1300000.0,
+            570000,
+            570000,
+            570000,
+            570000,
+            570000,
+        ],
+        [
+            -500000,
+            200000,
+            200000,
+            200000,
+            200000,
+            200000,
+        ],
+        [
+            -3200000,
+            990000,
+            990000,
+            990000,
+            990000,
+            990000,
+        ],
+        [
+            -2100000,
+            750000,
+            750000,
+            750000,
+            750000,
+            750000,
+        ],
+    ],
+}
+
+_MOCK_PROJECTS_EXERCISE_RESULTS = [["1", "4", "3"], 2600000]
+
+
 @pytest.mark.unit
 def test_correct_vpn():
     from src.metrics import bussiness as subject
@@ -158,3 +208,25 @@ def test_mutually_esclusive_correct_ranking():
     mutually = subject.MutuallyEsclusive(projects)
 
     assert [pro.id for pro in mutually.ranking] == ["1", "0"]
+
+
+@pytest.mark.unit
+def test_mutually_esclusive_exercise():
+    from src.metrics import bussiness as subject
+
+    projects: List[Project] = []
+    for i in range(len(_MOCK_PROJECTS_EXERCISE["projects"])):
+        project = subject.Project(
+            amounts=_MOCK_PROJECTS_EXERCISE["projects"][i],
+            TCO=_MOCK_PROJECTS_EXERCISE["tco"],
+            id=str(i),
+        )
+        projects.append(project)
+
+    mutually = subject.MutuallyEsclusive(projects=projects)
+
+    in_projects, out_projects, credit = mutually.budget_best_option(
+        _MOCK_PROJECTS_EXERCISE["budget"]
+    )
+
+    assert [[pro.id for pro in in_projects], credit] == _MOCK_PROJECTS_EXERCISE_RESULTS

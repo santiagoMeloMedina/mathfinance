@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, List, Union
+from typing import Any, List, Tuple, Union
 
 import numpy_financial as npf
 
@@ -79,6 +79,13 @@ class Project:
             result = self.id == x
         return result
 
+    def __str__(self):
+        return f"""
+            Project '{self.id}'
+            VPN: {self._VPN}
+            TIR: {self._TIR}
+        """
+
 
 class Rank:
     def __init__(self, order: List[Project] = [], pair_rank: Rank = None):
@@ -137,6 +144,15 @@ class MutuallyEsclusive:
         self.projects.append(project)
         self.__rank()
 
+    def print_ranking(self):
+        print("\n".join([str(pro) for pro in self.ranking]))
+
+    def print_vpns(self):
+        print("\n".join([str(pro) for pro in self.vpns.order]))
+
+    def print_tirs(self):
+        print("\n".join([str(pro) for pro in self.tirs.order]))
+
     @classmethod
     def comparison_project(cls, smaller: Project, greater: Project) -> Project:
         comparison = Project(TCO=greater.TCO)
@@ -152,39 +168,42 @@ class MutuallyEsclusive:
         return comparison._is_viable
 
     def __rank(self):
-        vps_rank = Rank(sorted(self.projects, key=lambda x: x._VPN))
+        vpns_rank = Rank(sorted(self.projects, key=lambda x: x._VPN, reverse=True))
         tirs_rank = Rank(
-            sorted(self.projects, key=lambda x: x._TIR), pair_rank=vps_rank
+            sorted(self.projects, key=lambda x: x._TIR, reverse=True),
+            pair_rank=vpns_rank,
         )
-        vps_rank.pair_rank = tirs_rank
+        vpns_rank.pair_rank = tirs_rank
 
-        self.vps = vps_rank
+        self.vpns = vpns_rank
         self.tirs = tirs_rank
 
         self.ranking: List[Project] = []
 
-        while not vps_rank._is_empty or not tirs_rank._is_empty:
-            if vps_rank._is_empty:
+        while not vpns_rank._is_empty or not tirs_rank._is_empty:
+            if vpns_rank._is_empty:
                 self.ranking.append(tirs_rank._get)
             elif tirs_rank._is_empty:
-                self.ranking.append(vps_rank._get)
+                self.ranking.append(vpns_rank._get)
             else:
-                if vps_rank._see == tirs_rank._see:
-                    self.ranking.append(vps_rank._get)
+                if vpns_rank._see == tirs_rank._see:
+                    self.ranking.append(vpns_rank._get)
                 else:
                     if self.is_greater_viable(
                         smaller=tirs_rank._see,
-                        greater=vps_rank._see,
+                        greater=vpns_rank._see,
                     ):
-                        self.ranking.append(vps_rank._get)
+                        self.ranking.append(vpns_rank._get)
                     else:
                         self.ranking.append(tirs_rank._get)
 
-    def budget_best_option(self, budget: float):
+    def budget_best_option(
+        self, budget: float
+    ) -> Tuple[List[Project], List[Project], float]:
         """Returns data in the following order:
         1. Projects bought
         2. Projects not bought
-        3. How muchc it needs in credit to buy (1)
+        3. How much it needs in credit to buy (1)
         """
         acum = 0
         in_projects, out_projects = [], []
