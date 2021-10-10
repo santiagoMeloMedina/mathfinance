@@ -208,6 +208,9 @@ class MutuallyEsclusive:
 
 
 class Index(Project):
+
+    DATE_VALUES = {"years": 12, "months": 30, "days": 24}
+
     def __init__(self, project: Project):
         super().__init__(amounts=project.amounts, TCO=project.TCO, id=project.id)
 
@@ -238,7 +241,7 @@ class Index(Project):
     def _PR_format(self):
         result = {}
         tmp = self._PR
-        temp = {"years": 12, "months": 30, "days": 24}
+        temp = self.DATE_VALUES
         for key in temp:
             multiplier = temp[key]
             value = int(tmp)
