@@ -1,5 +1,6 @@
 from typing import List
 import pytest
+import datetime
 
 from src import models
 from src.metrics.bussiness import Project
@@ -136,21 +137,6 @@ def test_project_is_viable():
 
 
 @pytest.mark.unit
-def test_project_indexes():
-    from src.metrics import bussiness as subject
-
-    project = subject.Project(
-        amounts=_MOCK_INDEXES_EXERCISE_PROJECT, TCO=_MOCK_INDEXES_EXERCISE_PROJECT_TCO
-    )
-
-    index = subject.Index(project)
-
-    assert round(index._IR, 4) == round(index._BC, 4) == _MOCK_INDEXES_IR_BC
-    assert round(index._PR, 4) == _MOCK_INDEXES_PR
-    assert round(index._TVR.value, 3) == _MOCK_INDEXES_TVR
-
-
-@pytest.mark.unit
 def test_rank_with_correct_flow():
     from src.metrics import bussiness as subject
 
@@ -257,3 +243,35 @@ def test_mutually_esclusive_exercise():
     )
 
     assert [[pro.id for pro in in_projects], credit] == _MOCK_PROJECTS_EXERCISE_RESULTS
+
+
+@pytest.mark.unit
+def test_project_indexes():
+    from src.metrics import bussiness as subject
+
+    project = subject.Project(
+        amounts=_MOCK_INDEXES_EXERCISE_PROJECT, TCO=_MOCK_INDEXES_EXERCISE_PROJECT_TCO
+    )
+
+    index = subject.Index(project)
+
+    assert round(index._IR, 4) == round(index._BC, 4) == _MOCK_INDEXES_IR_BC
+    assert round(index._PR, 4) == _MOCK_INDEXES_PR
+    assert round(index._TVR.value, 3) == _MOCK_INDEXES_TVR
+
+
+@pytest.mark.unit
+def test_project_pr_format():
+    from src.metrics import bussiness as subject
+
+    project = subject.Project(
+        amounts=_MOCK_INDEXES_EXERCISE_PROJECT, TCO=_MOCK_INDEXES_EXERCISE_PROJECT_TCO
+    )
+
+    index = subject.Index(project)
+
+    assert index._PR_format == {"years": 3, "months": 5, "days": 26}
+    assert (
+        index.future_date(datetime.datetime(2021, 10, 4)).strftime("%Y-%m-%d")
+        == "2025-03-30"
+    )

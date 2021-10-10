@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import datetime
+
 from typing import Any, List, Tuple, Union
+from dateutil.relativedelta import relativedelta
+
 
 import numpy_financial as npf
 
@@ -229,6 +233,22 @@ class Index(Project):
 
         before, after, n = find_middle()
         return n + ((self.initial_pay - before) / (after - before))
+
+    @property
+    def _PR_format(self):
+        result = {}
+        tmp = self._PR
+        temp = {"years": 12, "months": 30, "days": 24}
+        for key in temp:
+            multiplier = temp[key]
+            value = int(tmp)
+            tmp = (tmp - value) * multiplier
+            result[key] = value
+        return result
+
+    def future_date(self, date: datetime.datetime):
+        pr_date = self._PR_format
+        return date + relativedelta(**pr_date)
 
     @property
     def _TVR(self):
