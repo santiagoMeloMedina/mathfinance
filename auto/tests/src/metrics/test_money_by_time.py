@@ -2,6 +2,9 @@ import pytest
 
 _MOCK_METRICS = {"Ip": 20, "VF": 400, "VP": 277.8, "N": 2}
 
+_MOCK_VF_REINVESTED = {"Ip": 20, "VF": 100000000}
+_MOCK_VF_REINVESTED_VF = 207360000.0
+
 
 @pytest.mark.unit
 def test_get_correct_vp():
@@ -37,3 +40,12 @@ def test_get_correct_n():
     metric = subject.Metric(**metrics_mock)
 
     assert round(metric._N, 1) == _MOCK_METRICS["N"]
+
+
+@pytest.mark.unit
+def test_get_correct_vf():
+    from src.metrics import money_by_time as subject
+
+    metric = subject.Metric(**_MOCK_VF_REINVESTED)
+
+    assert round(metric._VF_n(4), 1) == _MOCK_VF_REINVESTED_VF

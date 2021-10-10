@@ -1,5 +1,4 @@
 from typing import List
-from numpy import greater
 import pytest
 
 from src import models
@@ -92,6 +91,19 @@ _MOCK_PROJECTS_EXERCISE = {
 
 _MOCK_PROJECTS_EXERCISE_RESULTS = [["1", "4", "3"], 2600000]
 
+_MOCK_INDEXES_EXERCISE_PROJECT = [
+    -1000000000,
+    100000000,
+    400000000,
+    900000000,
+    500000000,
+    100000000,
+]
+_MOCK_INDEXES_EXERCISE_PROJECT_TCO = 20
+_MOCK_INDEXES_IR_BC = 1.1633
+_MOCK_INDEXES_PR = 3.4896
+_MOCK_INDEXES_TVR = 23.685
+
 
 @pytest.mark.unit
 def test_correct_vpn():
@@ -121,6 +133,21 @@ def test_project_is_viable():
     project = subject.Project(amounts=_MOCK_PROJECT_AMOUNTS, TCO=_MOCK_VIABLE_TCO)
 
     assert project._is_viable
+
+
+@pytest.mark.unit
+def test_project_indexes():
+    from src.metrics import bussiness as subject
+
+    project = subject.Project(
+        amounts=_MOCK_INDEXES_EXERCISE_PROJECT, TCO=_MOCK_INDEXES_EXERCISE_PROJECT_TCO
+    )
+
+    index = subject.Index(project)
+
+    assert round(index._IR, 4) == round(index._BC, 4) == _MOCK_INDEXES_IR_BC
+    assert round(index._PR, 4) == _MOCK_INDEXES_PR
+    assert round(index._TVR.value, 3) == _MOCK_INDEXES_TVR
 
 
 @pytest.mark.unit

@@ -39,21 +39,8 @@ class Project:
             self.vdt.add(metric)
 
     @property
-    def _N(self):
-        tmp = len(self.amounts) - 1
-        return max(tmp, 0)
-
-    @property
-    def _VPs(self):
-        return self.vdt._VPs
-
-    @property
-    def _VFs(self):
-        return self.vdt._VFs
-
-    @property
     def _VPN(self) -> float:
-        return self.amounts[0] + self._VPs
+        return self.amounts[0] + self.vdt._VPs
 
     @property
     def _TIR(self) -> models.Percentage:
@@ -214,3 +201,37 @@ class MutuallyEsclusive:
             else:
                 out_projects.append(project)
         return (in_projects, out_projects, acum - budget)
+
+
+class Index(Project):
+    def __init__(self, project: Project):
+        super().__init__(amounts=project.amounts, TCO=project.TCO, id=project.id)
+
+    @property
+    def _IR(self):
+        return (self._VPN / self.initial_pay) + 1
+
+    @property
+    def _BC(self):
+        return self.vdt._VPs / self.initial_pay
+
+    @property
+    def _PR(self):
+        def find_middle() -> Tuple[float, float, int]:
+            i = 0
+            while (
+                i < len(self.vdt.VPs_acum) and self.vdt.VPs_acum[i] < self.initial_pay
+            ):
+                i += 1
+
+            before, after = self.vdt.VPs_acum[i - 1], self.vdt.VPs_acum[i]
+            return (before, after, i)
+
+        before, after, n = find_middle()
+        return n + ((self.initial_pay - before) / (after - before))
+
+    @property
+    def _TVR(self):
+        n = len(self.vdt.VFs_reinvested)
+        tmp = ((self.vdt._VFs_reinvested / self.initial_pay) ** (1 / n)) - 1
+        return models.Percentage(tmp * 100)
