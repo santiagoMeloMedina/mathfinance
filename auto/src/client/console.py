@@ -1,23 +1,48 @@
-from typing import Any
+from __future__ import annotations
+
 import click
 import os
 
-_LINUX_UP_ARROW = "\x1b[A"
-_LINUX_DOWN_ARROW = "\x1b[B"
-_LINUX_ENTER_ARROW = "\r"
+from enum import Enum
+from typing import Callable, List
+
+
+class StrColors(Enum):
+    RED = "\033[1;31m"
+    BLUE = "\033[1;34m"
+    CYAN = "\033[1;36m"
+    GREEN = "\033[0;32m"
+    RESET = "\033[0;0m"
+    BOLD = "\033[;1m"
+    REVERSE = "\033[;7m"
+
+    @classmethod
+    def colored(cls, text: str, color: StrColors) -> str:
+        return f"{color.value}{text}"
+
+
+class LinuxKeys(Enum):
+    _LINUX_UP_ARROW = "\x1b[A"
+    _LINUX_DOWN_ARROW = "\x1b[B"
+    _LINUX_ENTER_ARROW = "\r"
 
 
 class Sign:
-    def __init__(self, n: int, key: str, select_sign: str, unselect_sign: str):
+    def __init__(
+        self, options: List[str], key: str, select_sign: str, unselect_sign: str
+    ):
         self.i = 0
         self.key = key
         self.select_sign = select_sign
         self.unselect_sign = unselect_sign
+        self.options = options
         self.done = False
-        self.signs = self.__generate_map(n=n)
+        self.signs = self.__generate_map(n=len(options))
         self.signs[self.__key(0)] = self.select_sign
 
-    def __key(self, i: int):
+    def __key(self, i: int = None):
+        if i is None:
+            i = self.i
         return f"{self.key}{i}"
 
     def __generate_map(self, n: int):
@@ -27,39 +52,66 @@ class Sign:
         return result
 
     def forward(self):
-        self.signs[self.__key(self.i)] = self.unselect_sign
+        self.signs[self.__key()] = self.unselect_sign
         self.i = (self.i + 1) % len(self.signs)
-        self.signs[self.__key(self.i)] = self.select_sign
+        self.signs[self.__key()] = self.select_sign
 
     def backwards(self):
-        self.signs[self.__key(self.i)] = self.unselect_sign
+        self.signs[self.__key()] = self.unselect_sign
         self.i = self.i - 1 if self.i - 1 >= 0 else len(self.signs) - 1
-        self.signs[self.__key(self.i)] = self.select_sign
+        self.signs[self.__key()] = self.select_sign
 
-    def _done(self):
-        self.done = True
+    def _done(self, action: Callable):
+        def call_action():
+            self.done = True
+            action(self.options[self.i])
+
+        return call_action
 
 
-def print_options(options):
-    key = "o"
-    sign = Sign(n=len(options), key=key, select_sign=">", unselect_sign="-")
-    while not sign.done:
-        options_text = "\n".join(
-            ["{" + f"{key}{i}" + "}" + f" {options[i]}" for i in range(len(options))]
+class Console:
+
+    SELECTED = ">"
+    UNSELECTED = "-"
+    KEY = "o"
+
+    @classmethod
+    def print_options(cls, question: str, options: List[str], action: Callable):
+        sign = Sign(
+            options=options,
+            key=cls.KEY,
+            select_sign=cls.SELECTED,
+            unselect_sign=cls.UNSELECTED,
         )
-        os.system("clear")
-        print(options_text.format(**sign.signs))
-        key_choose(sign=sign)
+        while not sign.done:
+            format_option = (
+                lambda option, i, selected: StrColors.colored(
+                    text="{" + f"{cls.KEY}{i}" + "}" + f" {str(option)}",
+                    color=StrColors.RESET,
+                )
+                if selected
+                else StrColors.colored(
+                    text="{" + f"{cls.KEY}{i}" + "}" + f" {str(option)}",
+                    color=StrColors.BLUE,
+                )
+            )
+            options_text = "\n".join(
+                [
+                    format_option(option=options[i], i=i, selected=not sign.i == i)
+                    for i in range(len(options))
+                ]
+            )
+            os.system("clear")
+            print(StrColors.colored(text=f"{question}\n", color=StrColors.BOLD))
+            print(options_text.format(**sign.signs))
+            cls.__key_choose(sign=sign, action=action)
 
-
-def key_choose(sign: Sign):
-    key = click.getchar()
-    actions = {
-        _LINUX_ENTER_ARROW: sign._done,
-        _LINUX_UP_ARROW: sign.backwards,
-        _LINUX_DOWN_ARROW: sign.forward,
-    }
-    actions[key]()
-
-
-print_options(["mi titi patito", "chichi pototo", "tatiiiito"])
+    @classmethod
+    def __key_choose(cls, sign: Sign, action: Callable):
+        key = click.getchar()
+        actions = {
+            LinuxKeys._LINUX_ENTER_ARROW.value: sign._done(action),
+            LinuxKeys._LINUX_UP_ARROW.value: sign.backwards,
+            LinuxKeys._LINUX_DOWN_ARROW.value: sign.forward,
+        }
+        actions[key]()
