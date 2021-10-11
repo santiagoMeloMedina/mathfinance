@@ -1,19 +1,12 @@
-from src.client import console
-
-
-MAIN_QUESTIONS = "Which topic is the problem on?"
-TOPICS = {
-    "Linear Gradient": lambda: print("lg"),
-    "Geometric Gradient": lambda: print("gg"),
-    "Project Evaluation": lambda: print("pe"),
-}
-
-
-def go_to_section(option: str):
-    return TOPICS[option]()
+from src.client.question import Question, QuestionKind, QuestionEdge
+from src.client.flow.topics import projects
 
 
 def start():
-    console.Console.print_options(
-        question=MAIN_QUESTIONS, options=list(TOPICS.keys()), action=go_to_section
+    main_q0 = Question(id=0, kind=QuestionKind.SELECT, content="Escoja el tema:")
+
+    main_q0.add_edge(
+        edge=QuestionEdge(target=projects.projects_q0, alias="Project Evaluation")
     )
+
+    main_q0.ask()

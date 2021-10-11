@@ -4,7 +4,7 @@ import click
 import os
 
 from enum import Enum
-from typing import Callable, List
+from typing import Any, Callable, List
 
 
 class StrColors(Enum):
@@ -76,7 +76,7 @@ class Console:
     KEY = "o"
 
     @classmethod
-    def print_options(cls, question: str, options: List[str], action: Callable):
+    def get_options(cls, question: str, options: List[str], action: Callable):
         sign = Sign(
             options=options,
             key=cls.KEY,
@@ -105,6 +105,21 @@ class Console:
             print(StrColors.colored(text=f"{question}\n", color=StrColors.BOLD))
             print(options_text.format(**sign.signs))
             cls.__key_choose(sign=sign, action=action)
+
+    @classmethod
+    def get_input(
+        cls, question: str, type_: Any, action: Callable, call_action: bool = True
+    ):
+        os.system("clear")
+        data = input(
+            StrColors.colored(
+                text=StrColors.colored(text=f"{question} ", color=StrColors.BOLD),
+                color=StrColors.REVERSE,
+            )
+        )
+        if call_action:
+            action()
+        return type_(data)
 
     @classmethod
     def __key_choose(cls, sign: Sign, action: Callable):
