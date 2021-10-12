@@ -1,16 +1,16 @@
 from typing import List
 from src.client.flow.topics import projects
-from src.client.question import Question, QuestionKind, QuestionEdge
+from src.client.flow.topics import form as topic_form
+from src.client.question import Question, QuestionKind
 from src.metrics.bussiness import Index, MutuallyEsclusive, Project
 
 
-class FormMutually:
+class FormMutually(topic_form.Form):
     def __init__(self, last_state: Question):
+        super().__init__(title="Que deseas hacer?", last=last_state, back_title="Atras")
 
         self.projects: List[Project] = []
         self.budget = 0
-
-        self.main = Question(kind=QuestionKind.SELECT, content="Que deseas hacer?")
 
         add_pro = Question(kind=QuestionKind.FINAL, process=self.add_project)
         del_pro = Question(
@@ -28,36 +28,23 @@ class FormMutually:
         show_rank_budget = Question(
             kind=QuestionKind.FINAL, process=self.show_rank_by_budget
         )
-        back = Question(kind=QuestionKind.LINK)
 
-        self.main.add_edge(edge=QuestionEdge(target=add_pro, alias="Agregar proyecto"))
-        self.main.add_edge(edge=QuestionEdge(target=del_pro, alias="Borrar proyecto"))
-        self.main.add_edge(
-            edge=QuestionEdge(target=set_budget, alias="Configurar presupuesto")
-        )
-        self.main.add_edge(edge=QuestionEdge(target=show_pro, alias="Ver proyecto"))
-        self.main.add_edge(edge=QuestionEdge(target=show_rank, alias="Ver ranking"))
-        self.main.add_edge(
-            edge=QuestionEdge(
-                target=show_rank_budget, alias="Ver ranking con presupuesto"
-            )
-        )
-        self.main.add_edge(edge=QuestionEdge(target=back, alias="Atras"))
+        self.bidirect(target=add_pro, alias="Agregar proyecto")
+        self.bidirect(target=del_pro, alias="Borrar proyecto")
+        self.bidirect(target=set_budget, alias="Configurar presupuesto")
 
-        add_pro.add_edge(edge=QuestionEdge(target=self.main))
-        del_pro.add_edge(edge=QuestionEdge(target=self.main))
-        set_budget.add_edge(edge=QuestionEdge(target=self.main))
+        self.direct(target=show_pro, alias="Ver proyecto")
+        self.direct(target=show_rank, alias="Ver ranking")
+        self.direct(target=show_rank_budget, alias="Ver ranking con presupuesto")
 
-        back.add_edge(edge=QuestionEdge(target=last_state))
-
-        self.main.ask()
+        self.run_form()
 
     def add_project(self):
         project = projects.FormProject(
             last_state=Question(kind=QuestionKind.FINAL)
         ).project
         self.projects.append(project)
-        self.main.ask()
+        self.run_form()
 
     def delete_project(self, id: str):
         tmp = list(filter(lambda x: x.id is not id, self.projects))
@@ -68,14 +55,14 @@ class FormMutually:
 
     def show_project(self):
         temp = Question(kind=QuestionKind.SELECT, content="Escoja el proyecto:")
-        temp.add_edge(edge=QuestionEdge(target=self.main, alias="Atras"))
+        temp.add_edge(target=self.main, alias="Atras")
         for project in self.projects:
             tmp = Question(
                 kind=QuestionKind.SELECT,
                 content=f"Project {project.id}\n{str(Index(project=project))}",
             )
-            temp.add_edge(edge=QuestionEdge(target=tmp, alias=f"Project {project.id}"))
-            tmp.add_edge(edge=QuestionEdge(target=temp, alias="Atras"))
+            temp.add_edge(target=tmp, alias=f"Project {project.id}")
+            tmp.add_edge(target=temp, alias="Atras")
 
         temp.ask()
 
@@ -85,7 +72,7 @@ class FormMutually:
             kind=QuestionKind.SELECT,
             content=f"Ranking de proyectos\n{mutually_esclusive.str_ranking()}",
         )
-        temp.add_edge(edge=QuestionEdge(target=self.main, alias="Atras"))
+        temp.add_edge(target=self.main, alias="Atras")
         temp.ask()
 
     def show_rank_by_budget(self):
@@ -94,5 +81,5 @@ class FormMutually:
             kind=QuestionKind.SELECT,
             content=f"Ranking de proyectos\n{mutually_esclusive.budget_rank(self.budget)}",
         )
-        temp.add_edge(edge=QuestionEdge(target=self.main, alias="Atras"))
+        temp.add_edge(target=self.main, alias="Atras")
         temp.ask()

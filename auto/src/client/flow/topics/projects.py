@@ -8,20 +8,22 @@ class FormProject:
     def __init__(self, last_state: Question):
 
         self.amounts = []
+        self.id = None
+        self.tco = None
 
-        confirm = Question(
+        self.main = Question(
+            kind=QuestionKind.SELECT, content="Que desea hacer en el proyecto?"
+        )
+        self.back = Question(
             kind=QuestionKind.LINK,
             process=self.build_project,
         )
+        self.main.add_edge(target=self.back, alias="Confirmar")
 
         add_id = Question(
             kind=QuestionKind.INPUT,
             content=("id", "Indique ID del proyecto:", str),
             process=self.set_id,
-        )
-
-        add_to_project = Question(
-            kind=QuestionKind.SELECT, content="Que desea hacer en el proyecto?"
         )
 
         add_amount = Question(
@@ -42,27 +44,20 @@ class FormProject:
             process=self.set_amounts,
         )
 
-        add_id.add_edge(edge=QuestionEdge(target=add_to_project))
-        add_to_project.add_edge(
-            edge=QuestionEdge(target=add_amount, alias="Agregar monto")
-        )
-        add_to_project.add_edge(
-            edge=QuestionEdge(
-                target=add_multiple_amount, alias="Agregar montos iguales"
-            )
-        )
-        add_to_project.add_edge(edge=QuestionEdge(target=add_tco, alias="Agregar TCO"))
-        add_to_project.add_edge(edge=QuestionEdge(target=confirm, alias="Confirmar"))
+        add_id.add_edge(target=self.main)
+        self.main.add_edge(target=add_amount, alias="Agregar monto")
+        self.main.add_edge(target=add_multiple_amount, alias="Agregar montos iguales")
+        self.main.add_edge(target=add_tco, alias="Agregar TCO")
 
-        add_amount.add_edge(edge=QuestionEdge(target=add_to_project))
-        add_multiple_amount.add_edge(edge=QuestionEdge(target=add_to_project))
-        add_tco.add_edge(edge=QuestionEdge(target=add_to_project))
-        confirm.add_edge(edge=QuestionEdge(target=last_state))
+        add_amount.add_edge(target=self.main)
+        add_multiple_amount.add_edge(target=self.main)
+        add_tco.add_edge(target=self.main)
+        self.back.add_edge(target=last_state)
 
         add_id.ask()
 
     def set_id(self, id: str):
-        self.id = id
+        self.id = id if id else None
 
     def set_amount(self, value: float):
         self.amounts.append(value)

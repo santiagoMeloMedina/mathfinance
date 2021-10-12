@@ -1,3 +1,4 @@
+from typing import Tuple
 from src import models
 
 
@@ -215,6 +216,11 @@ class LinearGradient:
         return self.A_star
 
     @property
+    def _A_star_w_VA(self):
+        self.A_star = self.VA - self.B
+        return self.A_star
+
+    @property
     def _VA_w_A(self):
         """No need of VP but needs A*"""
         a_star = self._A_star
@@ -234,3 +240,50 @@ class LinearGradient:
         tmp /= ((1 + self.Ip.real) ** self.N) * self.Ip.real
         self.VP = self.VA * tmp
         return self.VP
+
+    @property
+    def can_VP(self) -> Tuple[bool, str]:
+        result = False
+        reasons = ""
+        try:
+            values = [self.N, self.Ip, self.VA]
+            result = all([val is not None for val in values])
+        except Exception as e:
+            reasons = str(e)
+        return (result, reasons)
+
+    @property
+    def can_VA(self) -> Tuple[bool, str]:
+        result = False
+        reasons = ""
+        try:
+            values = [self.N, self.Ip, self.VP]
+            result = all([val is not None for val in values])
+            result = result or (self.can_A_start and self.B is not None)
+        except Exception as e:
+            reasons = str(e)
+        return (result, reasons)
+
+    @property
+    def can_A_start(self) -> Tuple[bool, str]:
+        result = False
+        reasons = ""
+        try:
+            values = [self.N, self.Ip, self.G]
+            values2 = [self.B, self.VA]
+            result = all([val is not None for val in values])
+            result = result or all([val is not None for val in values2])
+        except Exception as e:
+            reasons = str(e)
+        return (result, reasons)
+
+    @property
+    def can_G(self) -> Tuple[bool, str]:
+        result = False
+        reasons = ""
+        try:
+            values = [self.N, self.Ip, self.A_star]
+            result = all([val is not None for val in values])
+        except Exception as e:
+            reasons = str(e)
+        return (result, reasons)

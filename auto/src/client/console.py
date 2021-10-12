@@ -102,7 +102,7 @@ class Console:
                 ]
             )
             os.system("clear")
-            print(StrColors.colored(text=f"{question}\n", color=StrColors.BOLD))
+            print(StrColors.colored(text=f"\n{question}\n", color=StrColors.BOLD))
             print(options_text.format(**sign.signs))
             cls.__key_choose(sign=sign, action=action)
 
@@ -111,11 +111,11 @@ class Console:
         os.system("clear")
         data = input(
             StrColors.colored(
-                text=StrColors.colored(text=f"{question} ", color=StrColors.BOLD),
+                text=StrColors.colored(text=f"\n{question} ", color=StrColors.BOLD),
                 color=StrColors.REVERSE,
             )
         )
-        return type_(data)
+        return type_(data) if data else type_()
 
     @classmethod
     def __key_choose(cls, sign: Sign, action: Callable):
@@ -125,4 +125,5 @@ class Console:
             LinuxKeys._LINUX_UP_ARROW.value: sign.backwards,
             LinuxKeys._LINUX_DOWN_ARROW.value: sign.forward,
         }
-        actions[key]()
+        if key in actions:
+            actions[key]()

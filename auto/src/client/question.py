@@ -34,7 +34,8 @@ class Question:
         self.process = process
         self.alias = {}
 
-    def add_edge(self, edge: QuestionEdge):
+    def add_edge(self, target: Question, alias: str = ""):
+        edge = QuestionEdge(target=target, alias=alias)
         self.edges[edge.target.__hash__] = edge
         self.alias[edge.alias] = edge.target.__hash__
 

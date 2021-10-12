@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import random
 
 from typing import Any, List, Tuple, Union
 from dateutil.relativedelta import relativedelta
@@ -19,13 +20,13 @@ class Project:
     def __init__(
         self,
         amounts: List[float] = [],
-        TCO: Union[models.Percentage, float] = 0,
+        TCO: Union[models.Percentage, float] = 1,
         id: Any = None,
     ):
         self.amounts = amounts
         self.TCO = TCO if type(TCO) == models.Percentage else models.Percentage(TCO)
         self.set_VDT()
-        self.id = id
+        self.id = id if id is not None else f"random{random.randint(0, 2**31)}"
         self.set_initial_pay(amounts[0] if len(amounts) else 0)
 
     def set_initial_pay(self, value):
@@ -45,7 +46,10 @@ class Project:
 
     @property
     def _VPN(self) -> float:
-        return self.amounts[0] + self.vdt._VPs
+        result = 0
+        if len(self.amounts):
+            result = self.amounts[0] + self.vdt._VPs
+        return result
 
     @property
     def _TIR(self) -> models.Percentage:
@@ -224,14 +228,22 @@ class Index(Project):
 
     @property
     def _IR(self):
-        return (self._VPN / self.initial_pay) + 1
+        result = 0
+        if self.initial_pay:
+            result = (self._VPN / self.initial_pay) + 1
+        return result
 
     @property
     def _BC(self):
-        return self.vdt._VPs / self.initial_pay
+        result = 0
+        if self.initial_pay:
+            result = self.vdt._VPs / self.initial_pay
+        return result
 
     @property
     def _PR(self):
+        result = 0
+
         def find_middle() -> Tuple[float, float, int]:
             i = 0
             while (
@@ -239,11 +251,15 @@ class Index(Project):
             ):
                 i += 1
 
-            before, after = self.vdt.VPs_acum[i - 1], self.vdt.VPs_acum[i]
+            before, after = 0, 0
+            if len(self.vdt.VPs_acum):
+                before, after = self.vdt.VPs_acum[i - 1], self.vdt.VPs_acum[i]
             return (before, after, i)
 
         before, after, n = find_middle()
-        return n + ((self.initial_pay - before) / (after - before))
+        if after - before:
+            result = n + ((self.initial_pay - before) / (after - before))
+        return result
 
     @property
     def _PR_format(self):
@@ -263,8 +279,10 @@ class Index(Project):
 
     @property
     def _TVR(self):
-        n = len(self.vdt.VFs_reinvested)
-        tmp = ((self.vdt._VFs_reinvested / self.initial_pay) ** (1 / n)) - 1
+        tmp = 0
+        if self.initial_pay:
+            n = len(self.vdt.VFs_reinvested)
+            tmp = ((self.vdt._VFs_reinvested / self.initial_pay) ** (1 / n)) - 1
         return models.Percentage(tmp * 100)
 
     def __str__(self):
