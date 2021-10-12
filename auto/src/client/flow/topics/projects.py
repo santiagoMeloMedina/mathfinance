@@ -1,24 +1,20 @@
-from typing import Any, List
-from src.client.question import Question, QuestionKind, QuestionEdge
-
+from src.client.flow.topics import form as topic_form
+from src.client.question import Question, QuestionKind
 from src.metrics.bussiness import Project
 
 
-class FormProject:
+class FormProject(topic_form.Form):
     def __init__(self, last_state: Question):
+        super().__init__(
+            title="Que desea hacer en el proyecto?",
+            last=last_state,
+            back_title="Confirmar",
+            back_process=self.build_project,
+        )
 
         self.amounts = []
         self.id = None
         self.tco = None
-
-        self.main = Question(
-            kind=QuestionKind.SELECT, content="Que desea hacer en el proyecto?"
-        )
-        self.back = Question(
-            kind=QuestionKind.LINK,
-            process=self.build_project,
-        )
-        self.main.add_edge(target=self.back, alias="Confirmar")
 
         add_id = Question(
             kind=QuestionKind.INPUT,
@@ -45,14 +41,10 @@ class FormProject:
         )
 
         add_id.add_edge(target=self.main)
-        self.main.add_edge(target=add_amount, alias="Agregar monto")
-        self.main.add_edge(target=add_multiple_amount, alias="Agregar montos iguales")
-        self.main.add_edge(target=add_tco, alias="Agregar TCO")
 
-        add_amount.add_edge(target=self.main)
-        add_multiple_amount.add_edge(target=self.main)
-        add_tco.add_edge(target=self.main)
-        self.back.add_edge(target=last_state)
+        self.bidirect(target=add_amount, alias="Agregar monto")
+        self.bidirect(target=add_multiple_amount, alias="Agregar montos iguales")
+        self.bidirect(target=add_tco, alias="Agregar TCO")
 
         add_id.ask()
 

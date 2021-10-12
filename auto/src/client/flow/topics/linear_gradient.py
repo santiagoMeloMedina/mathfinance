@@ -46,7 +46,7 @@ class FormLinearGradient(topic_form.Form):
         self.bidirect(target=set_VP, alias="Definir VP")
         self.bidirect(target=get_VP, alias="Obtener VP")
 
-        self.main.ask()
+        self.run_form()
 
     def set_B(self, value: float):
         self.B = value
