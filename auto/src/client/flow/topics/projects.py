@@ -1,33 +1,78 @@
+from typing import Any, List
 from src.client.question import Question, QuestionKind, QuestionEdge
 
-
-projects_q0 = Question(id=0, kind=QuestionKind.SELECT, content="Que desea hacer?")
-projects_q1 = Question(
-    id=1, kind=QuestionKind.INPUT, content=("id", "Indique ID del proyecto:", str)
-)
-projects_q2 = Question(
-    id=2, kind=QuestionKind.SELECT, content="Que desea hacer en el proyecto?"
-)
-projects_q3 = Question(
-    id=3, kind=QuestionKind.INPUT, content=("amount", "Escriba el monto $:", float)
-)
-projects_q4 = Question(
-    id=4,
-    kind=QuestionKind.INPUT,
-    content=[("quantity", "Cantidad:", int), ("amount", "Monto $:", float)],
-)
+from src.metrics.bussiness import Project
 
 
-projects_q0.add_edge(edge=QuestionEdge(target=projects_q1, alias="Agregar proyecto"))
+class FormProject:
+    def __init__(self, last_state: Question):
 
-projects_q1.add_edge(edge=QuestionEdge(target=projects_q2))
+        self.amounts = []
 
-projects_q2.add_edge(edge=QuestionEdge(target=projects_q3, alias="Agregar monto"))
-projects_q2.add_edge(
-    edge=QuestionEdge(target=projects_q4, alias="Agregar multiples montos iguales")
-)
-projects_q2.add_edge(edge=QuestionEdge(target=projects_q0, alias="Confirmar"))
+        confirm = Question(
+            kind=QuestionKind.LINK,
+            process=self.build_project,
+        )
 
-projects_q3.add_edge(edge=QuestionEdge(target=projects_q2))
+        add_id = Question(
+            kind=QuestionKind.INPUT,
+            content=("id", "Indique ID del proyecto:", str),
+            process=self.set_id,
+        )
 
-projects_q4.add_edge(edge=QuestionEdge(target=projects_q2))
+        add_to_project = Question(
+            kind=QuestionKind.SELECT, content="Que desea hacer en el proyecto?"
+        )
+
+        add_amount = Question(
+            kind=QuestionKind.INPUT,
+            content=("value", "Escriba el monto $:", float),
+            process=self.set_amount,
+        )
+
+        add_tco = Question(
+            kind=QuestionKind.INPUT,
+            content=("value", "Escriba el tco%:", float),
+            process=self.set_tco,
+        )
+
+        add_multiple_amount = Question(
+            kind=QuestionKind.INPUT,
+            content=[("quantity", "Cantidad:", int), ("amount", "Monto $:", float)],
+            process=self.set_amounts,
+        )
+
+        add_id.add_edge(edge=QuestionEdge(target=add_to_project))
+        add_to_project.add_edge(
+            edge=QuestionEdge(target=add_amount, alias="Agregar monto")
+        )
+        add_to_project.add_edge(
+            edge=QuestionEdge(
+                target=add_multiple_amount, alias="Agregar montos iguales"
+            )
+        )
+        add_to_project.add_edge(edge=QuestionEdge(target=add_tco, alias="Agregar TCO"))
+        add_to_project.add_edge(edge=QuestionEdge(target=confirm, alias="Confirmar"))
+
+        add_amount.add_edge(edge=QuestionEdge(target=add_to_project))
+        add_multiple_amount.add_edge(edge=QuestionEdge(target=add_to_project))
+        add_tco.add_edge(edge=QuestionEdge(target=add_to_project))
+        confirm.add_edge(edge=QuestionEdge(target=last_state))
+
+        add_id.ask()
+
+    def set_id(self, id: str):
+        self.id = id
+
+    def set_amount(self, value: float):
+        self.amounts.append(value)
+
+    def set_amounts(self, quantity: int, amount: float):
+        self.amounts.extend(quantity * [amount])
+
+    def set_tco(self, value: str):
+        self.tco = value
+
+    def build_project(self) -> Project:
+        self.project = Project(amounts=self.amounts, TCO=self.tco, id=self.id)
+        return self.project

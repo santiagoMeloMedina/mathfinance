@@ -107,9 +107,7 @@ class Console:
             cls.__key_choose(sign=sign, action=action)
 
     @classmethod
-    def get_input(
-        cls, question: str, type_: Any, action: Callable, call_action: bool = True
-    ):
+    def get_input(cls, question: str, type_: Any):
         os.system("clear")
         data = input(
             StrColors.colored(
@@ -117,8 +115,6 @@ class Console:
                 color=StrColors.REVERSE,
             )
         )
-        if call_action:
-            action()
         return type_(data)
 
     @classmethod

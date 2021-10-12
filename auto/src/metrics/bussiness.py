@@ -12,6 +12,7 @@ from collections import deque
 
 from src import models
 from src.metrics import money_by_time as mbt
+from src import util
 
 
 class Project:
@@ -73,8 +74,10 @@ class Project:
     def __str__(self):
         return f"""
             Project '{self.id}'
+            TCO: {self.TCO}
             VPN: {self._VPN}
             TIR: {self._TIR}
+            VIABLE: {'SI' if self._is_viable else 'NO'}
         """
 
 
@@ -135,8 +138,13 @@ class MutuallyEsclusive:
         self.projects.append(project)
         self.__rank()
 
-    def print_ranking(self):
-        print("\n".join([str(pro) for pro in self.ranking]))
+    def str_ranking(self):
+        return "\n".join([str(pro) for pro in self.ranking])
+
+    def budget_rank(self, budget: float):
+        in_projects, out_projects, credit = self.budget_best_option(budget=budget)
+        considered = "\n".join([str(pro) for pro in in_projects])
+        return f"{considered}\nCredito: {util.format_money(value=credit, decimal=2)}"
 
     def print_vpns(self):
         print("\n".join([str(pro) for pro in self.vpns.order]))
@@ -258,3 +266,18 @@ class Index(Project):
         n = len(self.vdt.VFs_reinvested)
         tmp = ((self.vdt._VFs_reinvested / self.initial_pay) ** (1 / n)) - 1
         return models.Percentage(tmp * 100)
+
+    def __str__(self):
+        return f"""
+            Project '{self.id}'
+            TCO: {self.TCO}
+            VPN: {self._VPN}
+            TIR: {self._TIR}
+            VIABLE: {'SI' if self._is_viable else 'NO'}
+
+            Indices:
+                IR: {self._IR}
+                BC: {self._BC}
+                PR: {self._PR} {self._PR_format}
+                TVR: {self._TVR}
+        """
