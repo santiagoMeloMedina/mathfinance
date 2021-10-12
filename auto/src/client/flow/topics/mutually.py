@@ -28,6 +28,7 @@ class FormMutually:
         show_rank_budget = Question(
             kind=QuestionKind.FINAL, process=self.show_rank_by_budget
         )
+        back = Question(kind=QuestionKind.LINK)
 
         self.main.add_edge(edge=QuestionEdge(target=add_pro, alias="Agregar proyecto"))
         self.main.add_edge(edge=QuestionEdge(target=del_pro, alias="Borrar proyecto"))
@@ -41,13 +42,13 @@ class FormMutually:
                 target=show_rank_budget, alias="Ver ranking con presupuesto"
             )
         )
+        self.main.add_edge(edge=QuestionEdge(target=back, alias="Atras"))
 
         add_pro.add_edge(edge=QuestionEdge(target=self.main))
         del_pro.add_edge(edge=QuestionEdge(target=self.main))
         set_budget.add_edge(edge=QuestionEdge(target=self.main))
-        show_pro.add_edge(edge=QuestionEdge(target=last_state))
-        show_rank.add_edge(edge=QuestionEdge(target=last_state))
-        show_rank_budget.add_edge(edge=QuestionEdge(target=last_state))
+
+        back.add_edge(edge=QuestionEdge(target=last_state))
 
         self.main.ask()
 
