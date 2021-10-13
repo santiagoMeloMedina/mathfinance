@@ -69,6 +69,10 @@ class FormLinearGradient(topic_form.Form):
             kind=QuestionKind.FINAL,
             process=self.get_g,
         )
+        get_B = Question(
+            kind=QuestionKind.FINAL,
+            process=self.get_b,
+        )
         get_totals = Question(
             kind=QuestionKind.FINAL,
             process=self.get_totals,
@@ -91,6 +95,7 @@ class FormLinearGradient(topic_form.Form):
         self.direct(target=get_VA, alias="Obtener VA")
         self.direct(target=get_Astar, alias="Obtener A*")
         self.direct(target=get_G, alias="Obtener G")
+        self.direct(target=get_B, alias="Obtener B")
         self.direct(target=get_totals, alias="Obtener totales")
         self.direct(target=get_n_metrics, alias="Obtener Momento")
 
@@ -165,6 +170,13 @@ class FormLinearGradient(topic_form.Form):
         linear = self.build_linear_gradient()
         G_solved = util.format_money(value=linear.solve(start=linear._G))
         temp = Question(kind=QuestionKind.SELECT, content=G_solved)
+        temp.add_edge(target=self.main, alias="Atras")
+        temp.ask()
+
+    def get_b(self):
+        linear = self.build_linear_gradient()
+        B_solved = util.format_money(value=linear.solve(start=linear._B))
+        temp = Question(kind=QuestionKind.SELECT, content=B_solved)
         temp.add_edge(target=self.main, alias="Atras")
         temp.ask()
 

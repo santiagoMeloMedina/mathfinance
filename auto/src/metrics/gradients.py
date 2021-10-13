@@ -231,6 +231,11 @@ class LinearGradient:
             self.A_star = self.VA - self.B
         return self.A_star if self.A_star else 0
 
+    def _B(self):
+        if all([val is not None for val in [self.VA, self.A_star]]):
+            self.B = self.VA - self.A_star
+        return self.B if self.B else 0
+
     def _VA_w_A(self):
         if all([val is not None for val in [self.B, self.A_star]]):
             self.VA = self.B + self.A_star
@@ -258,6 +263,12 @@ class LinearGradient:
             self._VA: [self._VP],
             self._VA_w_A: [self._A_star, self._A_star_w_VA],
             self._VP: [self._VA, self._VA_w_A],
+            self._B: [
+                self._A_star,
+                self._A_star_w_VA,
+                self._VA,
+                self._VA_w_A,
+            ],
         }
 
         def traverse(start: Callable, visited: Set[Callable]):

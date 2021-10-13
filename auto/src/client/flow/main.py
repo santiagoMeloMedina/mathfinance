@@ -1,4 +1,5 @@
 import os
+import sys
 from src.client.question import Question, QuestionKind, QuestionEdge
 from src.client.flow.topics import projects, mutually, linear_gradient
 
@@ -29,4 +30,4 @@ class Graph:
 
     def __exit(self):
         os.system("clear")
-        exit()
+        sys.exit()
