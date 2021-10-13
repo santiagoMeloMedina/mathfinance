@@ -1,4 +1,5 @@
 from src.client.flow.topics import form as topic_form
+from src.client.flow.topics.rate import FormRate
 from src.client.question import Question, QuestionKind
 from src.metrics.bussiness import Project
 
@@ -29,9 +30,15 @@ class FormProject(topic_form.Form):
         )
 
         add_tco = Question(
+            kind=QuestionKind.SELECT, content="Que desea hacer con la tasa?"
+        )
+
+        convert_tco = Question(kind=QuestionKind.LINK, process=self.set_convert_tco)
+
+        add_tco_as_value = Question(
             kind=QuestionKind.INPUT,
             content=("value", "Escriba el tco%:", float),
-            process=self.set_tco,
+            process=self.set_tco_as_value,
         )
 
         add_multiple_amount = Question(
@@ -44,7 +51,12 @@ class FormProject(topic_form.Form):
 
         self.bidirect(target=add_amount, alias="Agregar monto")
         self.bidirect(target=add_multiple_amount, alias="Agregar montos iguales")
-        self.bidirect(target=add_tco, alias="Agregar TCO")
+        self.direct(target=add_tco, alias="Agregar TCO")
+
+        add_tco.add_edge(target=add_tco_as_value, alias="Definir valor")
+        add_tco.add_edge(target=convert_tco, alias="Convertir tasa")
+        add_tco_as_value.add_edge(target=self.main)
+        convert_tco.add_edge(target=self.main)
 
         add_id.ask()
 
@@ -57,8 +69,11 @@ class FormProject(topic_form.Form):
     def set_amounts(self, quantity: int, amount: float):
         self.amounts.extend(quantity * [amount])
 
-    def set_tco(self, value: str):
+    def set_tco_as_value(self, value: str):
         self.tco = value
+
+    def set_convert_tco(self):
+        self.tco = FormRate().rate
 
     def build_project(self) -> Project:
         self.project = Project(amounts=self.amounts, TCO=self.tco, id=self.id)
