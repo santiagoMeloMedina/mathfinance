@@ -69,6 +69,16 @@ class GeometricGradient:
             for n in range(len(values)):
                 values[n] = round(values[n], self.decimal)
 
+    def _n_metrics(self, n: int):
+        n_metrics = {
+            "interest": self._interest(n),
+            "payment": self._payment(n),
+            "fee": self._fee(n),
+            "balance": self._balance(n),
+        }
+        self.round_values(n_metrics)
+        return n_metrics
+
     @property
     def _last_metrics(self):
         last_metrics = {
@@ -92,21 +102,43 @@ class GeometricGradient:
         return total
 
     def _VP(self):
-        p1 = 1 / (self.J - self.Ip)
-        p2 = (((1 + self.J.real) / (1 + self.Ip.real)) ** self.N) - 1
-        self.VP = self.B * p1 * p2
-        return self.VP
+        if all([val is not None for val in [self.Ip, self.J, self.B, self.N]]):
+            p1 = 1 / (self.J - self.Ip)
+            p2 = (((1 + self.J.real) / (1 + self.Ip.real)) ** self.N) - 1
+            self.VP = self.B * p1 * p2
+        return self.VP if self.VP is not None else 0
 
     def _B(self):
-        p1 = 1 / (self.J - self.Ip)
-        p2 = (((1 + self.J.real) / (1 + self.Ip.real)) ** self.N) - 1
-        self.B = self.VP / (p1 * p2)
-        return self.B
+        if all([val is not None for val in [self.Ip, self.J, self.VP, self.N]]):
+            p1 = 1 / (self.J - self.Ip)
+            p2 = (((1 + self.J.real) / (1 + self.Ip.real)) ** self.N) - 1
+            self.B = self.VP / (p1 * p2)
+        return self.B if self.B is not None else 0
 
     def _B_w_VP_Ip_J(self):
-        tmp = self.Ip - self.J
-        self.B = self.VP * tmp
-        return self.B
+        if all([val is not None for val in [self.Ip, self.J, self.VP]]):
+            tmp = self.Ip - self.J
+            self.B = self.VP * tmp
+        return self.B if self.B is not None else 0
+
+    def solve(self, start: Callable):
+        graph = {
+            self._VP: [self._B, self._B_w_VP_Ip_J],
+            self._B: [self._VP],
+            self._B_w_VP_Ip_J: [self._VP],
+        }
+
+        def traverse(start: Callable, visited: Set[Callable]):
+            print(start)
+            children = graph[start]
+            visited.add(start)
+            for child in children:
+                if child not in visited:
+                    traverse(start=child, visited=visited)
+            start()
+
+        traverse(start=start, visited=set())
+        return start()
 
 
 class LinearGradient:

@@ -1,7 +1,12 @@
 import os
 import sys
 from src.client.question import Question, QuestionKind, QuestionEdge
-from src.client.flow.topics import projects, mutually, linear_gradient
+from src.client.flow.topics import (
+    projects,
+    mutually,
+    linear_gradient,
+    geometric_gradient,
+)
 
 
 class Graph:
@@ -11,13 +16,15 @@ class Graph:
             content="Escoja el tema:",
         )
         project = Question(kind=QuestionKind.FINAL, process=self.__project_evaluation)
-        linear_gradient = Question(
-            kind=QuestionKind.FINAL, process=self.__linear_gradient
+        l_gradient = Question(kind=QuestionKind.FINAL, process=self.__linear_gradient)
+        g_gradient = Question(
+            kind=QuestionKind.FINAL, process=self.__geometric_gradient
         )
         off = Question(kind=QuestionKind.FINAL, process=self.__exit)
 
         self.main.add_edge(target=project, alias="Evaluacion de Proyectos")
-        self.main.add_edge(target=linear_gradient, alias="Gradientes Lineares")
+        self.main.add_edge(target=l_gradient, alias="Gradiente Linear")
+        self.main.add_edge(target=g_gradient, alias="Gradiente Geometrico")
         self.main.add_edge(target=off, alias="Salir")
 
         self.main.ask()
@@ -27,6 +34,9 @@ class Graph:
 
     def __linear_gradient(self):
         linear_gradient.FormLinearGradient(last_state=self.main)
+
+    def __geometric_gradient(self):
+        geometric_gradient.FormGeometricGradient(last_state=self.main)
 
     def __exit(self):
         os.system("clear")
