@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Callable, Dict, List, Set, Tuple
 from src import models
 
 
@@ -91,21 +91,18 @@ class GeometricGradient:
         self.round_values(total)
         return total
 
-    @property
     def _VP(self):
         p1 = 1 / (self.J - self.Ip)
         p2 = (((1 + self.J.real) / (1 + self.Ip.real)) ** self.N) - 1
         self.VP = self.B * p1 * p2
         return self.VP
 
-    @property
     def _B(self):
         p1 = 1 / (self.J - self.Ip)
         p2 = (((1 + self.J.real) / (1 + self.Ip.real)) ** self.N) - 1
         self.B = self.VP / (p1 * p2)
         return self.B
 
-    @property
     def _B_w_VP_Ip_J(self):
         tmp = self.Ip - self.J
         self.B = self.VP * tmp
@@ -120,6 +117,8 @@ class LinearGradient:
         N: int = None,
         Ip: float = None,
         VP: float = None,
+        VA: float = None,
+        A_star: float = None,
         decimal: int = 3,
     ):
         """
@@ -134,6 +133,8 @@ class LinearGradient:
         self.N = N
         self.Ip = models.Percentage(Ip)
         self.VP = VP
+        self.VA = VA
+        self.A_star = A_star
         self.decimal = decimal
         self.new_system()
 
@@ -179,6 +180,16 @@ class LinearGradient:
             for n in range(len(values)):
                 values[n] = round(values[n], self.decimal)
 
+    def _n_metrics(self, n: int):
+        last_metrics = {
+            "interest": self._interest(n),
+            "payment": self._payment(n),
+            "fee": self._fee(n),
+            "balance": self._balance(n),
+        }
+        self.round_values(last_metrics)
+        return last_metrics
+
     @property
     def _last_metrics(self):
         last_metrics = {
@@ -201,89 +212,62 @@ class LinearGradient:
         self.round_values(total)
         return total
 
-    @property
     def _G(self):
-        tmp = 1 / self.Ip.real
-        tmp -= self.N / (((1 + self.Ip.real) ** self.N) - 1)
-        self.G = self.A_star / tmp
-        return self.G
+        if all([val is not None for val in [self.Ip, self.N, self.A_star]]):
+            tmp = 1 / self.Ip.real
+            tmp -= self.N / (((1 + self.Ip.real) ** self.N) - 1)
+            self.G = self.A_star / tmp
+        return self.G if self.G else 0
 
-    @property
     def _A_star(self):
-        tmp = 1 / self.Ip.real
-        tmp -= self.N / (((1 + self.Ip.real) ** self.N) - 1)
-        self.A_star = self.G * tmp
-        return self.A_star
+        if all([val is not None for val in [self.Ip, self.N, self.G]]):
+            tmp = 1 / self.Ip.real
+            tmp -= self.N / (((1 + self.Ip.real) ** self.N) - 1)
+            self.A_star = self.G * tmp
+        return self.A_star if self.A_star else 0
 
-    @property
     def _A_star_w_VA(self):
-        self.A_star = self.VA - self.B
-        return self.A_star
+        if all([val is not None for val in [self.VA, self.B]]):
+            self.A_star = self.VA - self.B
+        return self.A_star if self.A_star else 0
 
-    @property
     def _VA_w_A(self):
-        """No need of VP but needs A*"""
-        a_star = self._A_star
-        self.VA = self.B + a_star
-        return self.VA
+        if all([val is not None for val in [self.B, self.A_star]]):
+            self.VA = self.B + self.A_star
+        return self.VA if self.VA else 0
 
-    @property
     def _VA(self):
-        tmp = ((1 + self.Ip.real) ** self.N) - 1
-        tmp /= ((1 + self.Ip.real) ** self.N) * self.Ip.real
-        self.VA = self.VP / tmp
-        return self.VA
+        if all([val is not None for val in [self.Ip, self.N, self.VP]]):
+            tmp = ((1 + self.Ip.real) ** self.N) - 1
+            tmp /= ((1 + self.Ip.real) ** self.N) * self.Ip.real
+            self.VA = self.VP / tmp
+        return self.VA if self.VA else 0
 
-    @property
     def _VP(self):
-        tmp = ((1 + self.Ip.real) ** self.N) - 1
-        tmp /= ((1 + self.Ip.real) ** self.N) * self.Ip.real
-        self.VP = self.VA * tmp
-        return self.VP
+        if all([val is not None for val in [self.Ip, self.N, self.VA]]):
+            tmp = ((1 + self.Ip.real) ** self.N) - 1
+            tmp /= ((1 + self.Ip.real) ** self.N) * self.Ip.real
+            self.VP = self.VA * tmp
+        return self.VP if self.VP else 0
 
-    @property
-    def can_VP(self) -> Tuple[bool, str]:
-        result = False
-        reasons = ""
-        try:
-            values = [self.N, self.Ip, self.VA]
-            result = all([val is not None for val in values])
-        except Exception as e:
-            reasons = str(e)
-        return (result, reasons)
+    def solve(self, start: Callable):
+        graph = {
+            self._G: [self._A_star, self._A_star_w_VA],
+            self._A_star: [self._G],
+            self._A_star_w_VA: [self._VA],
+            self._VA: [self._VP],
+            self._VA_w_A: [self._A_star, self._A_star_w_VA],
+            self._VP: [self._VA, self._VA_w_A],
+        }
 
-    @property
-    def can_VA(self) -> Tuple[bool, str]:
-        result = False
-        reasons = ""
-        try:
-            values = [self.N, self.Ip, self.VP]
-            result = all([val is not None for val in values])
-            result = result or (self.can_A_start and self.B is not None)
-        except Exception as e:
-            reasons = str(e)
-        return (result, reasons)
+        def traverse(start: Callable, visited: Set[Callable]):
+            print(start)
+            children = graph[start]
+            visited.add(start)
+            for child in children:
+                if child not in visited:
+                    traverse(start=child, visited=visited)
+            start()
 
-    @property
-    def can_A_start(self) -> Tuple[bool, str]:
-        result = False
-        reasons = ""
-        try:
-            values = [self.N, self.Ip, self.G]
-            values2 = [self.B, self.VA]
-            result = all([val is not None for val in values])
-            result = result or all([val is not None for val in values2])
-        except Exception as e:
-            reasons = str(e)
-        return (result, reasons)
-
-    @property
-    def can_G(self) -> Tuple[bool, str]:
-        result = False
-        reasons = ""
-        try:
-            values = [self.N, self.Ip, self.A_star]
-            result = all([val is not None for val in values])
-        except Exception as e:
-            reasons = str(e)
-        return (result, reasons)
+        traverse(start=start, visited=set())
+        return start()

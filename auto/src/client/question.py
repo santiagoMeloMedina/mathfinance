@@ -13,6 +13,7 @@ class QuestionKind(Enum):
     INPUT = "INPUT"
     LINK = "LINK"
     FINAL = "FINAL"
+    ONLY_INPUT = "ONLY_INPUT"
 
 
 class QuestionEdge:
@@ -27,12 +28,14 @@ class Question:
         kind: QuestionKind,
         content: Union[str, Tuple[str, str, Any], List[Tuple[str, str, Any]]] = None,
         process: Callable = any_function,
+        extra: Callable = None,
     ):
         self.kind = kind
         self.content = content
         self.edges: Dict[str, QuestionEdge] = {}
         self.process = process
         self.alias = {}
+        self.extra = extra
 
     def add_edge(self, target: Question, alias: str = ""):
         edge = QuestionEdge(target=target, alias=alias)
@@ -48,6 +51,7 @@ class Question:
             question=self.content,
             options=[self.edges[option].alias for option in self.edges],
             action=process_and_traverse,
+            extra=self.extra,
         )
 
     def run_input(self):
@@ -65,6 +69,20 @@ class Question:
         self.process(**result)
         self.traverse()
 
+    def run_only_input(self):
+        result = {}
+        if type(self.content) == tuple:
+            param, txt, type_ = self.content
+            tmp = console.Console.get_input(question=txt, type_=type_)
+            result[param] = tmp
+        else:
+            for i in range(len(self.content)):
+                param, txt, type_ = self.content[i]
+                tmp = console.Console.get_input(question=txt, type_=type_)
+                result[param] = tmp
+
+        self.process(**result)
+
     def run_link(self):
         self.process()
         self.traverse()
@@ -78,6 +96,7 @@ class Question:
             QuestionKind.INPUT: self.run_input,
             QuestionKind.LINK: self.run_link,
             QuestionKind.FINAL: self.run_final,
+            QuestionKind.ONLY_INPUT: self.run_only_input,
         }
         runs[self.kind]()
 

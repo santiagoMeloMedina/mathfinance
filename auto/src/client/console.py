@@ -76,7 +76,13 @@ class Console:
     KEY = "o"
 
     @classmethod
-    def get_options(cls, question: str, options: List[str], action: Callable):
+    def get_options(
+        cls,
+        question: str,
+        options: List[str],
+        action: Callable,
+        extra: Callable = None,
+    ):
         sign = Sign(
             options=options,
             key=cls.KEY,
@@ -102,7 +108,12 @@ class Console:
                 ]
             )
             os.system("clear")
-            print(StrColors.colored(text=f"\n{question}\n", color=StrColors.BOLD))
+            extra_info = f"    {extra()}" if extra else ""
+            print(
+                StrColors.colored(
+                    text=f"\n{question} {extra_info}\n", color=StrColors.BOLD
+                )
+            )
             print(options_text.format(**sign.signs))
             cls.__key_choose(sign=sign, action=action)
 

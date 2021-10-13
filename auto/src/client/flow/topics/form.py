@@ -9,8 +9,9 @@ class Form:
         last: Question,
         back_title: str,
         back_process: Callable = lambda: None,
+        extra: Callable = None,
     ):
-        self.main = Question(kind=QuestionKind.SELECT, content=title)
+        self.main = Question(kind=QuestionKind.SELECT, content=title, extra=extra)
         self.back = Question(kind=QuestionKind.LINK, process=back_process)
         self.main.add_edge(target=self.back, alias=back_title)
         self.back.add_edge(target=last)
