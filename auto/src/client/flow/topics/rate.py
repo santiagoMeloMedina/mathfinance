@@ -1,5 +1,6 @@
 from typing import Any, Dict
 from src.client.question import Question, QuestionKind
+from src.models import Percentage
 from src.rates import Rate, RateOperation
 
 
@@ -9,7 +10,7 @@ class FormRate:
         self.value = None
         self.rate_type = None
         self.target = None
-        self.rate = None
+        self.rate: float = None
 
         set_value = Question(
             kind=QuestionKind.INPUT,
@@ -127,4 +128,6 @@ class FormRate:
                 rate=Rate(**source_data), source=source_type, target=target_type
             )
 
-        self.rate = result["result"]
+        tmp: Percentage = result["result"]
+
+        self.rate = tmp.value

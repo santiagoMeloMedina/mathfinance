@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 from enum import Enum
 from collections import deque
 
 from src import models
+
 
 class Rate:
     def __init__(
@@ -113,7 +114,7 @@ class RateOperation(Enum):
         return []
 
     @classmethod
-    def use_path(cls, path: List[Tuple[RateOperation, Any]]):
+    def use_path(cls, path: List[Tuple[RateOperation, models.Percentage]]):
         names, values = list(), list()
         for name, formula in path:
             values.append(formula())
@@ -121,14 +122,19 @@ class RateOperation(Enum):
         return (values[-1], " - ".join(names))
 
     @classmethod
-    def simple(cls, rate: Rate, source: RateOperation, target: RateOperation):
+    def simple(
+        cls, rate: Rate, source: RateOperation, target: RateOperation
+    ) -> Dict[str, Union[models.Percentage, str]]:
         result, path = cls.use_path(
             cls.convert(rate=rate, source=source, target=target)
         )
+        result: models.Percentage = result
         return {"result": result, "path": f"{path} - {target.value}"}
 
     @classmethod
-    def complex(cls, rate: Rate, source: RateOperation, target: RateOperation):
+    def complex(
+        cls, rate: Rate, source: RateOperation, target: RateOperation
+    ) -> Dict[str, Union[models.Percentage, str]]:
         first, path1 = cls.use_path(
             cls.convert(rate=rate, source=source, target=RateOperation.EFFECTIVE)
         )
@@ -141,22 +147,6 @@ class RateOperation(Enum):
             )
         )
 
-        return {"result": second, "path": f"{path1} - {path2} - {target.value}"}
+        result: models.Percentage = second
 
-
-# print(
-#     RateOperation.simple(
-#         Rate(nominal=18, nper=2),
-#         source=RateOperation.NOMINAL_A,
-#         target=RateOperation.IPV,
-#     )
-# )
-
-
-# result = RateOperation.complex(
-#     Rate(nominal=18, nper=2, d_nper=4),
-#     source=RateOperation.NOMINAL_A,
-#     target=RateOperation.IPV,
-# )
-
-# print(result["result"], result["path"])
+        return {"result": result, "path": f"{path1} - {path2} - {target.value}"}

@@ -1,4 +1,5 @@
 from src.client.flow.topics import form as topic_form
+from src.client.flow.topics.rate import FormRate
 from src.client.question import Question, QuestionKind
 from src.metrics import gradients
 from src import util
@@ -29,11 +30,19 @@ class FormLinearGradient(topic_form.Form):
         set_G = Question(
             kind=QuestionKind.INPUT, content=("value", "G:", float), process=self.set_G
         )
+
         set_Ip = Question(
+            kind=QuestionKind.SELECT, content="Que desea hacer con la tasa?"
+        )
+        set_Ip_by_value = Question(
             kind=QuestionKind.INPUT,
             content=("value", "Ip:", float),
-            process=self.set_Ip,
+            process=self.set_Ip_by_value,
         )
+        set_Ip_converted = Question(
+            kind=QuestionKind.LINK, process=self.set_Ip_converted
+        )
+
         set_N = Question(
             kind=QuestionKind.INPUT, content=("value", "N:", int), process=self.set_N
         )
@@ -85,7 +94,7 @@ class FormLinearGradient(topic_form.Form):
 
         self.bidirect(target=set_B, alias="Definir B")
         self.bidirect(target=set_G, alias="Definir G")
-        self.bidirect(target=set_Ip, alias="Definir Ip")
+        self.direct(target=set_Ip, alias="Definir Ip")
         self.bidirect(target=set_N, alias="Definir N")
         self.bidirect(target=set_VP, alias="Definir VP")
         self.bidirect(target=set_VA, alias="Definir VA")
@@ -98,6 +107,11 @@ class FormLinearGradient(topic_form.Form):
         self.direct(target=get_B, alias="Obtener B")
         self.direct(target=get_totals, alias="Obtener totales")
         self.direct(target=get_n_metrics, alias="Obtener Momento")
+
+        set_Ip.add_edge(target=set_Ip_by_value, alias="Definir valor")
+        set_Ip.add_edge(target=set_Ip_converted, alias="Convertir tasa")
+        set_Ip_by_value.add_edge(target=self.main)
+        set_Ip_converted.add_edge(target=self.main)
 
         self.run_form()
 
@@ -130,8 +144,11 @@ class FormLinearGradient(topic_form.Form):
     def set_N(self, value: int):
         self.N = value
 
-    def set_Ip(self, value: float):
+    def set_Ip_by_value(self, value: float):
         self.Ip = value
+
+    def set_Ip_converted(self):
+        self.Ip = FormRate().rate
 
     def set_VA(self, value: float):
         self.VA = value
