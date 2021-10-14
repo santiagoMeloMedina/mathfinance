@@ -54,7 +54,7 @@ class FormRate:
 
     def _get_period(self, value: str) -> int:
         result = 1
-        value = value.split()[0]
+        value = value.lower().split()[0]
         letters = value.split(".")
         periods = {
             "m": 12,
@@ -77,7 +77,7 @@ class FormRate:
 
     def _get_rate_type(self, value: str) -> RateOperation:
         result = None
-        value = value.split()[0]
+        value = value.lower().split()[0]
         letters = value.split(".")
         if len(letters) == 2:
             if value == "e.a":

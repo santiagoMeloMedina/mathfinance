@@ -305,19 +305,24 @@ class Index(Project):
         return self.vdt._VA(initial_pay=self.initial_pay)
 
     def __str__(self):
-        return f"""
-            Project '{self.id}'
+        amounts_str = "\n".join(
+            [
+                f"{i}. {util.format_money(self.amounts[i])}"
+                for i in range(len(self.amounts))
+            ]
+        )
+        return f"""\n{amounts_str}
+
             TCO: {self.TCO}
             VPN: {self._VPN}
             TIR: {self._TIR}
             VIABLE: {'SI' if self._is_viable else 'NO'}
 
-            Indices:
-                IR: {self._IR}
-                BC: {self._BC}
-                PR: {self._PR} {self._PR_format}
-                TVR: {self._TVR}
+            IR: {self._IR}
+            BC: {self._BC}
+            PR: {self._PR} {self._PR_format}
+            TVR: {self._TVR}
 
-                CPE: {util.format_money(self._CPE)}
-                CAUE: {util.format_money(self._CAUE)}
+            CPE: {util.format_money(self._CPE)}
+            CAUE: {util.format_money(self._CAUE)}
         """
