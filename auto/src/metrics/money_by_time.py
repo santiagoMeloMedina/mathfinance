@@ -110,12 +110,11 @@ class VDT:
     def _VPs(self):
         return sum(self.VPs)
 
-    @property
-    def _VA(self):
+    def _VA(self, initial_pay: float = 0):
         Ip = self.metrics[0].Ip
-        N = self.metrics[0].N
-        tmp = (((1 + Ip) ** N) * Ip) / (((1 + Ip) ** N) - 1)
-        return self._VPs * tmp
+        N = len(self.VPs)
+        tmp = (((1 + Ip.real) ** N) * Ip.real) / (((1 + Ip.real) ** N) - 1)
+        return (self._VPs + initial_pay) * tmp
 
     @property
     def _VFs(self):

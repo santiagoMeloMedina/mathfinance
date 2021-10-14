@@ -296,6 +296,14 @@ class Index(Project):
             pass
         return models.Percentage(tmp * 100)
 
+    @property
+    def _CPE(self):
+        return self.vdt._VPs + self.initial_pay
+
+    @property
+    def _CAUE(self):
+        return self.vdt._VA(initial_pay=self.initial_pay)
+
     def __str__(self):
         return f"""
             Project '{self.id}'
@@ -309,4 +317,7 @@ class Index(Project):
                 BC: {self._BC}
                 PR: {self._PR} {self._PR_format}
                 TVR: {self._TVR}
+
+                CPE: {util.format_money(self._CPE)}
+                CAUE: {util.format_money(self._CAUE)}
         """
