@@ -1,5 +1,5 @@
 import math
-from typing import List, Union
+from typing import Any, List, Union
 
 from src import models
 
@@ -7,41 +7,61 @@ from src import models
 class Metric:
     def __init__(
         self,
-        Ip: Union[float, models.Percentage] = 0,
-        VF: float = 0,
-        VP: float = 0,
-        N: int = 0,
+        Ip: Union[float, models.Percentage] = None,
+        VF: float = None,
+        VP: float = None,
+        N: int = None,
+        VA: float = None,
+        VF_reinvested: float = None,
     ):
         self.Ip = Ip if type(Ip) == models.Percentage else models.Percentage(Ip)
         self.VF = VF
         self.VP = VP
         self.N = N
+        self.VA = VA
+        self.VF_reinvested = VF_reinvested
+
+    def __have(self, values: List[Any]):
+        return any([val is not None for val in values])
 
     @property
     def _Ip(self):
-        self.Ip = models.Percentage(((self.VF / self.VP) ** (1 / self.N)) - 1)
-        return self.Ip
+        if self.__have([self.VF, self.VP, self.N]):
+            self.Ip = models.Percentage(((self.VF / self.VP) ** (1 / self.N)) - 1)
+        return self.Ip if self.Ip else 0
 
     @property
     def _VF(self):
-        self.VF = self.VP * (1 + self.Ip.real) ** self.N
-        return self.VF
+        if self.__have([self.VP, self.Ip, self.N]):
+            self.VF = self.VP * (1 + self.Ip.real) ** self.N
+        return self.VF if self.VF else 0
 
     def _VF_n(self, n: int):
-        self.VF_reinvested = self.VF * (1 + self.Ip.real) ** n
-        return self.VF_reinvested
+        if self.__have([self.VF, self.Ip]):
+            self.VF_reinvested = self.VF * (1 + self.Ip.real) ** n
+        return self.VF_reinvested if self.VF_reinvested else 0
 
     @property
     def _VP(self):
-        self.VP = self.VF / (1 + self.Ip.real) ** self.N
-        return self.VP
+        if self.__have([self.VF, self.Ip, self.N]):
+            self.VP = self.VF / (1 + self.Ip.real) ** self.N
+        return self.VP if self.VP else 0
 
     @property
     def _N(self):
-        f_p = math.log(self.VF / self.VP)
-        i = math.log(1 + self.Ip.real)
-        self.N = f_p / i
-        return self.N
+        if self.__have([self.VF, self.VP, self.Ip]):
+            f_p = math.log(self.VF / self.VP)
+            i = math.log(1 + self.Ip.real)
+            self.N = f_p / i
+        return self.N if self.N else 0
+
+    @property
+    def _VA(self):
+        if self.__have([self.Ip, self.N, self.VP]):
+            tmp = ((1 + self.Ip.real) ** self.N) * self.Ip.real
+            tmp = tmp / (((1 + self.Ip.real) ** self.N) - 1)
+            self.VA = self.VP * tmp
+        return self.VA if self.VA else 0
 
 
 class VDT:
@@ -89,6 +109,13 @@ class VDT:
     @property
     def _VPs(self):
         return sum(self.VPs)
+
+    @property
+    def _VA(self):
+        Ip = self.metrics[0].Ip
+        N = self.metrics[0].N
+        tmp = (((1 + Ip) ** N) * Ip) / (((1 + Ip) ** N) - 1)
+        return self._VPs * tmp
 
     @property
     def _VFs(self):

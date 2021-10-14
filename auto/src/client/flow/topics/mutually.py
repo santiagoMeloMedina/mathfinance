@@ -28,6 +28,9 @@ class FormMutually(topic_form.Form):
         show_rank_budget = Question(
             kind=QuestionKind.FINAL, process=self.show_rank_by_budget
         )
+        compare_projects = Question(
+            kind=QuestionKind.FINAL, process=self.compare_projects
+        )
 
         self.bidirect(target=add_pro, alias="Agregar proyecto")
         self.bidirect(target=del_pro, alias="Borrar proyecto")
@@ -36,6 +39,7 @@ class FormMutually(topic_form.Form):
         self.direct(target=show_pro, alias="Ver proyecto")
         self.direct(target=show_rank, alias="Ver ranking")
         self.direct(target=show_rank_budget, alias="Ver ranking con presupuesto")
+        self.direct(target=compare_projects, alias="Comparar proyectos")
 
         self.run_form()
 
@@ -65,6 +69,25 @@ class FormMutually(topic_form.Form):
             tmp.add_edge(target=temp, alias="Atras")
 
         temp.ask()
+
+    def compare_projects(self):
+        main = Question(kind=QuestionKind.SELECT, content="Escoja el menor:")
+        main.add_edge(target=self.main, alias="Atras")
+        for project_small in self.projects:
+            smaller = Question(
+                kind=QuestionKind.SELECT,
+                content="Escoja el mayor:",
+            )
+            main.add_edge(target=smaller, alias=f"Project {project_small.id}")
+            for project_great in self.projects:
+                tiri = MutuallyEsclusive._TIRI(
+                    smaller=project_small, greater=project_great
+                )
+                greater = Question(kind=QuestionKind.SELECT, content=f"TIRI: {tiri}")
+                smaller.add_edge(target=greater, alias=f"Project {project_great.id}")
+                greater.add_edge(target=self.main, alias="Atras")
+
+        main.ask()
 
     def show_ranking(self):
         mutually_esclusive = MutuallyEsclusive(projects=self.projects)

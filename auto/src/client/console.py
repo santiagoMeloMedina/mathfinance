@@ -126,7 +126,14 @@ class Console:
                 color=StrColors.REVERSE,
             )
         )
-        return type_(data) if data else type_()
+        if data:
+            try:
+                result = type_(eval(data))
+            except:
+                result = type_(data)
+        else:
+            result = type_()
+        return result
 
     @classmethod
     def __key_choose(cls, sign: Sign, action: Callable):

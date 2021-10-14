@@ -170,6 +170,11 @@ class MutuallyEsclusive:
         comparison = cls.comparison_project(smaller=smaller, greater=greater)
         return comparison._is_viable
 
+    @classmethod
+    def _TIRI(cls, smaller: Project, greater: Project) -> float:
+        comparison = cls.comparison_project(smaller=smaller, greater=greater)
+        return comparison._TIR
+
     def __rank(self):
         vpns_rank = Rank(sorted(self.projects, key=lambda x: x._VPN, reverse=True))
         tirs_rank = Rank(
@@ -256,9 +261,12 @@ class Index(Project):
                 before, after = self.vdt.VPs_acum[i - 1], self.vdt.VPs_acum[i]
             return (before, after, i)
 
-        before, after, n = find_middle()
-        if after - before:
-            result = n + ((self.initial_pay - before) / (after - before))
+        try:
+            before, after, n = find_middle()
+            if after - before:
+                result = n + ((self.initial_pay - before) / (after - before))
+        except:
+            pass
         return result
 
     @property
@@ -280,9 +288,12 @@ class Index(Project):
     @property
     def _TVR(self):
         tmp = 0
-        if self.initial_pay:
-            n = len(self.vdt.VFs_reinvested)
-            tmp = ((self.vdt._VFs_reinvested / self.initial_pay) ** (1 / n)) - 1
+        try:
+            if self.initial_pay:
+                n = len(self.vdt.VFs_reinvested)
+                tmp = ((self.vdt._VFs_reinvested / self.initial_pay) ** (1 / n)) - 1
+        except:
+            pass
         return models.Percentage(tmp * 100)
 
     def __str__(self):
