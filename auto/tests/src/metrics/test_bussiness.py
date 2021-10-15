@@ -3,7 +3,7 @@ import pytest
 import datetime
 
 from src import models
-from src.metrics.bussiness import Project
+from src.metrics.project import Project
 
 _MOCK_TCO = 20
 _MOCK_VIABLE_TCO = 10
@@ -108,7 +108,7 @@ _MOCK_INDEXES_TVR = 23.685
 
 @pytest.mark.unit
 def test_correct_vpn():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
 
     project = subject.Project(amounts=_MOCK_PROJECT_AMOUNTS, TCO=_MOCK_TCO)
 
@@ -117,7 +117,7 @@ def test_correct_vpn():
 
 @pytest.mark.unit
 def test_correct_tir():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
 
     project = subject.Project(amounts=_MOCK_PROJECT_AMOUNTS, TCO=_MOCK_TCO)
 
@@ -129,7 +129,7 @@ def test_correct_tir():
 
 @pytest.mark.unit
 def test_project_is_viable():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
 
     project = subject.Project(amounts=_MOCK_PROJECT_AMOUNTS, TCO=_MOCK_VIABLE_TCO)
 
@@ -138,12 +138,13 @@ def test_project_is_viable():
 
 @pytest.mark.unit
 def test_rank_with_correct_flow():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
+    from src.metrics import rank
 
-    rank_1 = subject.Rank(
+    rank_1 = rank.Rank(
         [subject.Project([1, 2, 3], id="A"), subject.Project([2, 3, 4], id="B")]
     )
-    rank_2 = subject.Rank(
+    rank_2 = rank.Rank(
         [
             subject.Project([3, 4, 5], id="C"),
             subject.Project([4, 5, 6], id="B"),
@@ -168,7 +169,8 @@ def test_rank_with_correct_flow():
 
 @pytest.mark.unit
 def test_mutually_esclusive_vpni_and_tiri():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
+    from src.metrics import mutually
 
     projects: List[Project] = []
     for i in range(len(_MOCK_PROJECTS_MUTUALLY_ESCLUSIVE)):
@@ -179,7 +181,7 @@ def test_mutually_esclusive_vpni_and_tiri():
         )
         projects.append(project)
 
-    comparison = subject.MutuallyEsclusive.comparison_project(
+    comparison = mutually.MutuallyEsclusive.comparison_project(
         smaller=projects[0], greater=projects[1]
     )
 
@@ -189,7 +191,8 @@ def test_mutually_esclusive_vpni_and_tiri():
 
 @pytest.mark.unit
 def test_mutually_esclusive_is_greater_comparison_viable():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
+    from src.metrics import mutually
 
     projects: List[Project] = []
     for i in range(len(_MOCK_PROJECTS_MUTUALLY_ESCLUSIVE)):
@@ -200,14 +203,15 @@ def test_mutually_esclusive_is_greater_comparison_viable():
         )
         projects.append(project)
 
-    assert subject.MutuallyEsclusive.is_greater_viable(
+    assert mutually.MutuallyEsclusive.is_greater_viable(
         smaller=projects[0], greater=projects[1]
     )
 
 
 @pytest.mark.unit
 def test_mutually_esclusive_correct_ranking():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
+    from src.metrics import mutually
 
     projects: List[Project] = []
     for i in range(len(_MOCK_PROJECTS_MUTUALLY_ESCLUSIVE)):
@@ -218,14 +222,15 @@ def test_mutually_esclusive_correct_ranking():
         )
         projects.append(project)
 
-    mutually = subject.MutuallyEsclusive(projects)
+    mutually = mutually.MutuallyEsclusive(projects)
 
     assert [pro.id for pro in mutually.ranking] == ["1", "0"]
 
 
 @pytest.mark.unit
 def test_mutually_esclusive_exercise():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
+    from src.metrics import mutually
 
     projects: List[Project] = []
     for i in range(len(_MOCK_PROJECTS_EXERCISE["projects"])):
@@ -236,7 +241,7 @@ def test_mutually_esclusive_exercise():
         )
         projects.append(project)
 
-    mutually = subject.MutuallyEsclusive(projects=projects)
+    mutually = mutually.MutuallyEsclusive(projects=projects)
 
     in_projects, out_projects, credit = mutually.budget_best_option(
         _MOCK_PROJECTS_EXERCISE["budget"]
@@ -247,7 +252,7 @@ def test_mutually_esclusive_exercise():
 
 @pytest.mark.unit
 def test_project_indexes():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
 
     project = subject.Project(
         amounts=_MOCK_INDEXES_EXERCISE_PROJECT, TCO=_MOCK_INDEXES_EXERCISE_PROJECT_TCO
@@ -262,7 +267,7 @@ def test_project_indexes():
 
 @pytest.mark.unit
 def test_project_pr_format():
-    from src.metrics import bussiness as subject
+    from src.metrics import project as subject
 
     project = subject.Project(
         amounts=_MOCK_INDEXES_EXERCISE_PROJECT, TCO=_MOCK_INDEXES_EXERCISE_PROJECT_TCO

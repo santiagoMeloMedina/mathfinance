@@ -9,8 +9,6 @@ from dateutil.relativedelta import relativedelta
 
 import numpy_financial as npf
 
-from collections import deque
-
 from src import models
 from src.metrics import money_by_time as mbt
 from src import util
@@ -28,6 +26,7 @@ class Project:
         self.set_VDT()
         self.id = id if id is not None else f"random{random.randint(0, 2**31)}"
         self.set_initial_pay(amounts[0] if len(amounts) else 0)
+        self.TVR_Ip = None
 
     def set_initial_pay(self, value):
         self.initial_pay = abs(value)
@@ -85,151 +84,16 @@ class Project:
         """
 
 
-class Rank:
-    def __init__(self, order: List[Project] = [], pair_rank: Rank = None):
-        self.order = order
-        self.data = deque(order)
-        self.selected = set()
-        self.pair_rank = pair_rank
-
-    @property
-    def _see(self):
-        tmp = self.data.popleft()
-        while tmp is not None and tmp.id in self.pair_rank.selected:
-            if not self._is_empty:
-                tmp = self.data.popleft()
-            else:
-                tmp = None
-        if tmp is not None:
-            self.data.appendleft(tmp)
-        return tmp
-
-    @property
-    def _get(self):
-        tmp = self.data.popleft()
-        while tmp is not None and tmp.id in self.pair_rank.selected:
-            if not self._is_empty:
-                tmp = self.data.popleft()
-            else:
-                tmp = None
-        if tmp is not None:
-            self.selected.add(tmp.id)
-        return tmp
-
-    @property
-    def not_selected(self) -> int:
-        counter = 0
-        for project in self.data:
-            if project.id not in self.pair_rank.selected:
-                counter += 1
-        return counter
-
-    @property
-    def _is_empty(self):
-        zero_to_select = self.not_selected == 0
-        return len(self.data) == 0 or zero_to_select
-
-    def __str__(self):
-        return f"{self.order}"
-
-
-class MutuallyEsclusive:
-    def __init__(self, projects: List[Project] = []):
-        self.projects = projects
-        self.__rank()
-
-    def add_project(self, project: Project):
-        self.projects.append(project)
-        self.__rank()
-
-    def str_ranking(self):
-        return "\n".join([str(pro) for pro in self.ranking])
-
-    def budget_rank(self, budget: float):
-        in_projects, out_projects, credit = self.budget_best_option(budget=budget)
-        considered = "\n".join([str(pro) for pro in in_projects])
-        return f"{considered}\nCredito: {util.format_money(value=credit, decimal=2)}"
-
-    def print_vpns(self):
-        print("\n".join([str(pro) for pro in self.vpns.order]))
-
-    def print_tirs(self):
-        print("\n".join([str(pro) for pro in self.tirs.order]))
-
-    @classmethod
-    def comparison_project(cls, smaller: Project, greater: Project) -> Project:
-        comparison = Project(TCO=greater.TCO)
-        for i in range(max(len(smaller.amounts), len(greater.amounts))):
-            sm, gt = smaller.amounts[i], greater.amounts[i]
-            comparison.add_amount(gt - sm)
-        comparison.set_VDT()
-        return comparison
-
-    @classmethod
-    def is_greater_viable(cls, smaller: Project, greater: Project) -> bool:
-        comparison = cls.comparison_project(smaller=smaller, greater=greater)
-        return comparison._is_viable
-
-    @classmethod
-    def _TIRI(cls, smaller: Project, greater: Project) -> float:
-        comparison = cls.comparison_project(smaller=smaller, greater=greater)
-        return comparison._TIR
-
-    def __rank(self):
-        vpns_rank = Rank(sorted(self.projects, key=lambda x: x._VPN, reverse=True))
-        tirs_rank = Rank(
-            sorted(self.projects, key=lambda x: x._TIR, reverse=True),
-            pair_rank=vpns_rank,
-        )
-        vpns_rank.pair_rank = tirs_rank
-
-        self.vpns = vpns_rank
-        self.tirs = tirs_rank
-
-        self.ranking: List[Project] = []
-
-        while not vpns_rank._is_empty or not tirs_rank._is_empty:
-            if vpns_rank._is_empty:
-                self.ranking.append(tirs_rank._get)
-            elif tirs_rank._is_empty:
-                self.ranking.append(vpns_rank._get)
-            else:
-                if vpns_rank._see == tirs_rank._see:
-                    self.ranking.append(vpns_rank._get)
-                else:
-                    if self.is_greater_viable(
-                        smaller=tirs_rank._see,
-                        greater=vpns_rank._see,
-                    ):
-                        self.ranking.append(vpns_rank._get)
-                    else:
-                        self.ranking.append(tirs_rank._get)
-
-    def budget_best_option(
-        self, budget: float
-    ) -> Tuple[List[Project], List[Project], float]:
-        """Returns data in the following order:
-        1. Projects bought
-        2. Projects not bought
-        3. How much it needs in credit to buy (1)
-        """
-        acum = 0
-        in_projects, out_projects = [], []
-        for project in self.ranking:
-            if acum < budget:
-                acum += project.initial_pay
-                in_projects.append(project)
-            else:
-                out_projects.append(project)
-        return (in_projects, out_projects, acum - budget)
-
-
 class Index(Project):
 
     DATE_VALUES = {"years": 12, "months": 30, "days": 24}
 
     def __init__(self, project: Project):
-        super().__init__(amounts=project.amounts, TCO=project.TCO, id=project.id)
+        super().__init__(
+            amounts=project.amounts,
+            TCO=project.TCO,
+            id=project.id,
+        )
 
     @property
     def _IR(self):

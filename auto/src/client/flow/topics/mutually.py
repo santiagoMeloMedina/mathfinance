@@ -4,7 +4,8 @@ from src.client.flow.topics import form as topic_form
 from src.client.flow.topics.rate import FormRate
 from src.client.question import Question, QuestionKind
 from src.data import DataCSV
-from src.metrics.bussiness import Index, MutuallyEsclusive, Project
+from src.metrics.project import Index, Project
+from src.metrics.mutually import MutuallyEsclusive
 
 
 class FormMutually(topic_form.Form):
@@ -14,6 +15,7 @@ class FormMutually(topic_form.Form):
         self.projects: List[Project] = []
         self.budget = 0
         self.tco = 0
+        self.tvr_ip = 0
 
         add_pro = Question(kind=QuestionKind.FINAL, process=self.add_project)
         del_pro = Question(
@@ -35,14 +37,32 @@ class FormMutually(topic_form.Form):
             kind=QuestionKind.FINAL, process=self.compare_projects
         )
 
+        add_tvr_ip = Question(
+            kind=QuestionKind.SELECT, content="Que deseas hacer con la tasa?"
+        )
+        add_tvr_by_value = Question(
+            kind=QuestionKind.INPUT,
+            content=("value", "Escriba valor de TVR Ip%", float),
+            process=self.set_tvr_ip_by_value,
+        )
+        add_tvr_ip_converted = Question(
+            kind=QuestionKind.LINK, process=self.set_tvr_ip_converted
+        )
+
         self.bidirect(target=add_pro, alias="Agregar proyectos")
         self.bidirect(target=del_pro, alias="Borrar proyecto")
         self.bidirect(target=set_budget, alias="Configurar presupuesto")
 
+        self.direct(target=add_tvr_ip, alias="Agregar TVR Ip")
         self.direct(target=show_pro, alias="Ver proyecto")
         self.direct(target=show_rank, alias="Ver ranking")
         self.direct(target=show_rank_budget, alias="Ver ranking con presupuesto")
         self.direct(target=compare_projects, alias="Comparar proyectos")
+
+        add_tvr_ip.add_edge(target=add_tvr_by_value, alias="Definir valor")
+        add_tvr_ip.add_edge(target=add_tvr_ip_converted, alias="Convertir valor")
+        add_tvr_by_value.add_edge(target=self.main)
+        add_tvr_ip_converted.add_edge(target=self.main)
 
         self.run_form()
 
@@ -97,6 +117,12 @@ class FormMutually(topic_form.Form):
     def set_convert_tco(self):
         self.tco = FormRate().rate
 
+    def set_tvr_ip_by_value(self, value: float):
+        self.tvr_ip = value
+
+    def set_tvr_ip_converted(self):
+        self.tvr_ip = FormRate().rate
+
     def delete_project(self, id: str):
         tmp = list(filter(lambda x: x.id is not id, self.projects))
         self.projects = tmp
@@ -130,7 +156,12 @@ class FormMutually(topic_form.Form):
                 tiri = MutuallyEsclusive._TIRI(
                     smaller=project_small, greater=project_great
                 )
-                greater = Question(kind=QuestionKind.SELECT, content=f"TIRI: {tiri}")
+                vpni = MutuallyEsclusive._VPNI(
+                    smaller=project_small, greater=project_great
+                )
+                greater = Question(
+                    kind=QuestionKind.SELECT, content=f"TIRI: {tiri}\nVNPI: {vpni}"
+                )
                 smaller.add_edge(target=greater, alias=f"Project {project_great.id}")
                 greater.add_edge(target=self.main, alias="Atras")
 

@@ -1,7 +1,7 @@
 from src.client.flow.topics import form as topic_form
 from src.client.flow.topics.rate import FormRate
 from src.client.question import Question, QuestionKind
-from src.metrics.bussiness import Project
+from src.metrics.project import Project
 
 
 class FormProject(topic_form.Form):
