@@ -19,14 +19,17 @@ class Project:
         self,
         amounts: List[float] = [],
         TCO: Union[models.Percentage, float] = 1,
+        TVR_ip: Union[models.Percentage, float] = 1,
         id: Any = None,
     ):
         self.amounts = amounts
         self.TCO = TCO if type(TCO) == models.Percentage else models.Percentage(TCO)
+        self.TVR_Ip = (
+            TVR_ip if type(TVR_ip) == models.Percentage else models.Percentage(TVR_ip)
+        )
         self.set_VDT()
         self.id = id if id is not None else f"random{random.randint(0, 2**31)}"
         self.set_initial_pay(amounts[0] if len(amounts) else 0)
-        self.TVR_Ip = None
 
     def set_initial_pay(self, value):
         self.initial_pay = abs(value)
@@ -39,7 +42,7 @@ class Project:
         self.vdt = mbt.VDT()
         for i in range(1, len(self.amounts)):
             amount = self.amounts[i]
-            metric = mbt.Metric(Ip=self.TCO, VF=amount, N=i)
+            metric = mbt.Metric(Ip=self.TCO, VF=amount, N=i, TVR_ip=self.TVR_Ip)
             metric._VP
             self.vdt.add(metric)
 
@@ -88,11 +91,12 @@ class Index(Project):
 
     DATE_VALUES = {"years": 12, "months": 30, "days": 24}
 
-    def __init__(self, project: Project):
+    def __init__(self, project: Project, TVR_ip: float = None):
         super().__init__(
             amounts=project.amounts,
             TCO=project.TCO,
             id=project.id,
+            TVR_ip=TVR_ip,
         )
 
     @property

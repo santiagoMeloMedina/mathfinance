@@ -258,7 +258,7 @@ def test_project_indexes():
         amounts=_MOCK_INDEXES_EXERCISE_PROJECT, TCO=_MOCK_INDEXES_EXERCISE_PROJECT_TCO
     )
 
-    index = subject.Index(project)
+    index = subject.Index(project, _MOCK_INDEXES_EXERCISE_PROJECT_TCO)
 
     assert round(index._IR, 4) == round(index._BC, 4) == _MOCK_INDEXES_IR_BC
     assert round(index._PR, 4) == _MOCK_INDEXES_PR

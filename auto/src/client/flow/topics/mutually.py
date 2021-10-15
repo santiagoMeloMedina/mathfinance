@@ -136,7 +136,7 @@ class FormMutually(topic_form.Form):
         for project in self.projects:
             tmp = Question(
                 kind=QuestionKind.SELECT,
-                content=f"Project {project.id}\n{str(Index(project=project))}",
+                content=f"Project {project.id}\n{str(Index(project=project, TVR_ip=self.tvr_ip))}",
             )
             temp.add_edge(target=tmp, alias=f"Project {project.id}")
             tmp.add_edge(target=temp, alias="Atras")

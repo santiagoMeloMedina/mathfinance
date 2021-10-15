@@ -2,7 +2,11 @@ import pytest
 
 _MOCK_METRICS = {"Ip": 20, "VF": 400, "VP": 277.8, "N": 2}
 
-_MOCK_VF_REINVESTED = {"Ip": 20, "VF": 100000000}
+_MOCK_VF_REINVESTED = {
+    "Ip": 20,
+    "VF": 100000000,
+    "TVR_ip": 20,
+}
 _MOCK_VF_REINVESTED_VF = 207360000.0
 
 

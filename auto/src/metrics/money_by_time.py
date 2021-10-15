@@ -13,6 +13,7 @@ class Metric:
         N: int = None,
         VA: float = None,
         VF_reinvested: float = None,
+        TVR_ip: Union[float, models.Percentage] = None,
     ):
         self.Ip = Ip if type(Ip) == models.Percentage else models.Percentage(Ip)
         self.VF = VF
@@ -20,6 +21,9 @@ class Metric:
         self.N = N
         self.VA = VA
         self.VF_reinvested = VF_reinvested
+        self.TVR_ip = (
+            TVR_ip if type(TVR_ip) == models.Percentage else models.Percentage(TVR_ip)
+        )
 
     def __have(self, values: List[Any]):
         return any([val is not None for val in values])
@@ -37,8 +41,8 @@ class Metric:
         return self.VF if self.VF else 0
 
     def _VF_n(self, n: int):
-        if self.__have([self.VF, self.Ip]):
-            self.VF_reinvested = self.VF * (1 + self.Ip.real) ** n
+        if self.__have([self.VF, self.TVR_ip]):
+            self.VF_reinvested = self.VF * (1 + self.TVR_ip.real) ** n
         return self.VF_reinvested if self.VF_reinvested else 0
 
     @property
