@@ -1,4 +1,5 @@
 from typing import List
+from src import util
 from src.client.flow.topics import projects
 from src.client.flow.topics import form as topic_form
 from src.client.flow.topics.rate import FormRate
@@ -146,26 +147,39 @@ class FormMutually(topic_form.Form):
     def compare_projects(self):
         main = Question(kind=QuestionKind.SELECT, content="Escoja el menor:")
         main.add_edge(target=self.main, alias="Atras")
-        for project_small in self.projects:
-            smaller = Question(
-                kind=QuestionKind.SELECT,
-                content="Escoja el mayor:",
-            )
+        for i in range(len(self.projects)):
+            project_small = self.projects[i]
+            smaller = Question(kind=QuestionKind.SELECT, content="Escoja el mayor:")
             main.add_edge(target=smaller, alias=f"Project {project_small.id}")
-            for project_great in self.projects:
-                tiri = MutuallyEsclusive._TIRI(
-                    smaller=project_small, greater=project_great
-                )
-                vpni = MutuallyEsclusive._VPNI(
-                    smaller=project_small, greater=project_great
-                )
-                greater = Question(
-                    kind=QuestionKind.SELECT, content=f"TIRI: {tiri}\nVNPI: {vpni}"
-                )
-                smaller.add_edge(target=greater, alias=f"Project {project_great.id}")
-                greater.add_edge(target=self.main, alias="Atras")
+            for j in range(len(self.projects)):
+                if not i == j:
+                    project_great = self.projects[j]
+                    comparison_projects = {
+                        "smaller": project_small,
+                        "greater": project_great,
+                    }
+                    greater = Question(
+                        kind=QuestionKind.FINAL,
+                        parameter=comparison_projects,
+                        process=self.deliver_comparison_results,
+                    )
+                    smaller.add_edge(
+                        target=greater, alias=f"Project {project_great.id}"
+                    )
 
         main.ask()
+
+    def deliver_comparison_results(self, smaller: Project, greater: Project):
+        comparison_project = MutuallyEsclusive.comparison_project(
+            smaller=smaller, greater=greater
+        )
+        tiri, vpni = comparison_project._TIR, comparison_project._VPN
+        temp = Question(
+            kind=QuestionKind.SELECT,
+            content=f"Project:\n{comparison_project.amounts}\n\nTIRI: {tiri}\nVPNI: {util.format_money(vpni)}",
+        )
+        temp.add_edge(target=self.main, alias="Atras")
+        temp.ask()
 
     def show_ranking(self):
         mutually_esclusive = MutuallyEsclusive(projects=self.projects)

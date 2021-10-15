@@ -29,6 +29,7 @@ class Question:
         content: Union[str, Tuple[str, str, Any], List[Tuple[str, str, Any]]] = None,
         process: Callable = any_function,
         extra: Callable = None,
+        parameter: Any = None,
     ):
         self.kind = kind
         self.content = content
@@ -36,6 +37,7 @@ class Question:
         self.process = process
         self.alias = {}
         self.extra = extra
+        self.parameter = parameter
 
     def add_edge(self, target: Question, alias: str = ""):
         edge = QuestionEdge(target=target, alias=alias)
@@ -88,6 +90,8 @@ class Question:
         self.traverse()
 
     def run_final(self):
+        if self.parameter:
+            self.process(**self.parameter)
         self.process()
 
     def ask(self):

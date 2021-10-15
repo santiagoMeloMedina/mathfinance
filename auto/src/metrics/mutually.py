@@ -30,7 +30,7 @@ class MutuallyEsclusive:
 
     @classmethod
     def comparison_project(cls, smaller: Project, greater: Project) -> Project:
-        comparison = Project(TCO=greater.TCO)
+        comparison = Project(TCO=greater.TCO, reset=True)
         for i in range(max(len(smaller.amounts), len(greater.amounts))):
             sm, gt = smaller.amounts[i], greater.amounts[i]
             comparison.add_amount(gt - sm)

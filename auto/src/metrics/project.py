@@ -21,8 +21,9 @@ class Project:
         TCO: Union[models.Percentage, float] = 1,
         TVR_ip: Union[models.Percentage, float] = 1,
         id: Any = None,
+        reset: bool = False,
     ):
-        self.amounts = amounts
+        self.amounts = [] if reset else amounts
         self.TCO = TCO if type(TCO) == models.Percentage else models.Percentage(TCO)
         self.TVR_Ip = (
             TVR_ip if type(TVR_ip) == models.Percentage else models.Percentage(TVR_ip)
