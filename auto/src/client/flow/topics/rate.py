@@ -2,6 +2,49 @@ from typing import Any, Dict
 from src.client.question import Question, QuestionKind
 from src.models import Percentage
 from src.rates import Rate, RateOperation
+from src.client.flow.topics import form as topic_form
+
+
+class FormRateTopic(topic_form.Form):
+    def __init__(self, last_state: Question):
+        super().__init__(title="Que deseas hacer?", last=last_state, back_title="Atras")
+
+        self.rates: Dict[str, FormRate] = {}
+
+        add_rate = Question(kind=QuestionKind.LINK, process=self.__add_rate)
+        get_rates = Question(kind=QuestionKind.FINAL, process=self._get_rates)
+
+        self.bidirect(target=add_rate, alias="Agregar tasa")
+        self.bidirect(target=get_rates, alias="Ver tasas")
+
+        self.run_form()
+    
+    def _add_named_rate(self, name):
+        formed_rate = FormRate()
+        self.rates[name] = "%s -> %s\n%s -> %s\n" % (
+            formed_rate.rate_type, 
+            formed_rate.value, 
+            formed_rate.target, 
+            formed_rate.rate
+        )
+    
+    def __add_rate(self):
+        rate = Question(
+            kind=QuestionKind.ONLY_INPUT,
+            content=("name", "Nombre:", str),
+            process=self._add_named_rate,
+        )
+        rate.ask()
+    
+    def _get_rates(self):
+        rates = ["%s\n%s" % (f"{'-'*10} {name} {'-'*10}", self.rates.get(name)) for name in self.rates]
+        temp = Question(
+            kind=QuestionKind.SELECT,
+            content="Tasas\n%s\n%s" % ('#'*30, "\n".join(rates)),
+        )
+        temp.add_edge(target=self.main, alias="Atras")
+        temp.ask()
+
 
 
 class FormRate:
@@ -58,7 +101,7 @@ class FormRate:
         letters = value.split(".")
         periods = {
             "m": 12,
-            "t": 3,
+            "t": 4,
             "s": 2,
             "b": 6,
             "q": 24,
